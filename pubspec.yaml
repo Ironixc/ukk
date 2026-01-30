@@ -1,0 +1,25 @@
+name: ukk
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.0.0  # Untuk State Management
+  http: ^1.1.0      # Untuk koneksi ke API PHP
+  shared_preferences: ^2.2.0 # Untuk simpan sesi login (Token/ID)
+  intl: ^0.18.0     # Untuk format Tanggal & Rupiah
+  google_fonts: ^5.1.0 # Agar font terlihat modern
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
