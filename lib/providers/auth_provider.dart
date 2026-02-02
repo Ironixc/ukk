@@ -132,5 +132,77 @@ class AuthProvider with ChangeNotifier {
     // 3. Kabari UI bahwa user sudah keluar
     notifyListeners();
   }
+//  // Update Profile dengan Debugging
+//   Future<Map<String, dynamic>> updateProfile(String nama, String alamat, String telp) async {
+//     try {
+//       final url = Uri.parse('$baseUrl/update_profile.php');
+      
+//       // 1. DEBUG: Cek data yang mau dikirim
+//       print("--------------------------------");
+//       print("Mencoba Update Profile...");
+//       print("ID User: ${_currentUser?.id}");
+//       print("Data: Nama=$nama, Alamat=$alamat, Telp=$telp");
 
+//       final response = await http.post(
+//         url,
+//         body: json.encode({
+//           'id_user': _currentUser!.id, // Pastikan ini tidak null
+//           'nama': nama,
+//           'alamat': alamat,
+//           'telp': telp,
+//         }),
+//       );
+
+//       // 2. DEBUG: Cek balasan server
+//       print("Status Code: ${response.statusCode}");
+//       print("Response Body: ${response.body}");
+//       print("--------------------------------");
+
+//       final data = json.decode(response.body);
+
+//       if (data['status'] == 'success') {
+//         // Update data lokal di aplikasi agar langsung berubah tanpa login ulang
+//         _currentUser!.namaLengkap = nama;
+//         // Jika Anda punya field alamat/telp di UserModel, update juga disini
+//         // _currentUser!.alamat = alamat; 
+        
+//         notifyListeners();
+//         return {'success': true, 'message': 'Profil berhasil diperbarui'};
+//       } else {
+//         // Kembalikan pesan error asli dari PHP
+//         return {'success': false, 'message': data['message'] ?? 'Gagal update'};
+//       }
+//     } catch (e) {
+//       print("Error Update Profile: $e");
+//       return {'success': false, 'message': 'Error Koneksi: $e'};
+//     }
+//   }
+//   // --- TAMBAHKAN KODE INI DI DALAM CLASS AUTH PROVIDER ---
+
+//   Future<String> changePassword(String oldPass, String newPass) async {
+//     try {
+//       final url = Uri.parse('$baseUrl/change_password.php');
+      
+//       final response = await http.post(
+//         url,
+//         body: json.encode({
+//           'id_user': _currentUser!.id, // Ambil ID user yang sedang login
+//           'old_password': oldPass,
+//           'new_password': newPass,
+//         }),
+//       );
+
+//       final data = json.decode(response.body);
+      
+//       // Kembalikan pesan dari server (Misal: "Password berhasil diganti" atau "Password lama salah")
+//       if (data['message'] != null) {
+//         return data['message'];
+//       } else {
+//         return "Terjadi kesalahan server";
+//       }
+
+//     } catch (e) {
+//       return "Gagal koneksi: $e";
+//     }
+//   }
 } // <--- Kurung tutup class AuthProvider

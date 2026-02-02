@@ -4,6 +4,8 @@ import '../../providers/admin_provider.dart';
 import '../../constants.dart';
 
 class ManageKeretaScreen extends StatefulWidget {
+  const ManageKeretaScreen({super.key});
+
   @override
   _ManageKeretaScreenState createState() => _ManageKeretaScreenState();
 }
@@ -23,33 +25,33 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
   // ---------------------------------------------------------------------------
   void _showFormDialog({Map? item}) {
     // Controller Text Input
-    final _nameController = TextEditingController(text: item != null ? item['nama_kereta'] : '');
-    final _descController = TextEditingController(text: item != null ? item['deskripsi'] : '');
+    final nameController = TextEditingController(text: item != null ? item['nama_kereta'] : '');
+    final descController = TextEditingController(text: item != null ? item['deskripsi'] : '');
     
     // Controller Gerbong & Kuota
     // Ambil data jumlah gerbong aktif jika ada, default 1
-    final _gerbongController = TextEditingController(
+    final gerbongController = TextEditingController(
       text: item != null && item['jumlah_gerbong_aktif'] != null 
           ? item['jumlah_gerbong_aktif'].toString() 
           : '1'
     );
-    final _kuotaController = TextEditingController(text: '50'); // Default 50 kursi
+    final kuotaController = TextEditingController(text: '50'); // Default 50 kursi
 
     // --- LOGIC PERBAIKAN DROPDOWN (CASE INSENSITIVE) ---
     List<String> opsiKelas = ['Ekonomi', 'Bisnis', 'Eksekutif'];
-    String _selectedKelas = 'Ekonomi'; // Default aman
+    String selectedKelas = 'Ekonomi'; // Default aman
 
     if (item != null && item['kelas'] != null) {
       String dbKelas = item['kelas'].toString();
       try {
         // Cari yg cocok (abaikan huruf besar/kecil). 
         // Misal DB "ekonomi" -> Ketemu "Ekonomi" di list -> Pakai "Ekonomi"
-        _selectedKelas = opsiKelas.firstWhere(
+        selectedKelas = opsiKelas.firstWhere(
           (opsi) => opsi.toLowerCase() == dbKelas.toLowerCase(),
           orElse: () => 'Ekonomi', // Jika data aneh, balik ke Ekonomi
         );
       } catch (e) {
-        _selectedKelas = 'Ekonomi';
+        selectedKelas = 'Ekonomi';
       }
     }
     // ---------------------------------------------------
@@ -68,7 +70,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                   children: [
                     // Input Nama
                     TextField(
-                      controller: _nameController, 
+                      controller: nameController, 
                       decoration: InputDecoration(
                         labelText: "Nama Kereta", 
                         hintText: "Cth: Argo Wilis",
@@ -80,7 +82,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                     
                     // Input Deskripsi
                     TextField(
-                      controller: _descController, 
+                      controller: descController, 
                       decoration: InputDecoration(
                         labelText: "Deskripsi / Rute",
                         border: OutlineInputBorder(),
@@ -91,7 +93,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                     
                     // Input Dropdown Kelas (FIXED)
                     DropdownButtonFormField<String>(
-                      value: _selectedKelas,
+                      initialValue: selectedKelas,
                       decoration: InputDecoration(
                         labelText: "Kelas Kereta",
                         border: OutlineInputBorder(),
@@ -102,7 +104,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                       }).toList(),
                       onChanged: (val) {
                         setStateDialog(() { // Update tampilan dialog lokal
-                          _selectedKelas = val!;
+                          selectedKelas = val!;
                         });
                       },
                     ),
@@ -118,7 +120,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                         // Input Jumlah Gerbong
                         Expanded(
                           child: TextField(
-                            controller: _gerbongController, 
+                            controller: gerbongController, 
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               labelText: "Jml Gerbong", 
@@ -133,7 +135,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                         // Agar logic Edit tidak terlalu rumit merubah struktur kursi lama
                         item == null ? Expanded(
                           child: TextField(
-                            controller: _kuotaController, 
+                            controller: kuotaController, 
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               labelText: "Kursi", 
@@ -173,7 +175,7 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
                   onPressed: () async {
                     // Validasi Sederhana
-                    if (_nameController.text.isEmpty || _gerbongController.text.isEmpty) {
+                    if (nameController.text.isEmpty || gerbongController.text.isEmpty) {
                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Nama & Jumlah Gerbong wajib diisi")));
                        return;
                     }
@@ -189,20 +191,20 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
                     if (item == null) {
                       // Mode Tambah
                       success = await provider.addKereta(
-                        _nameController.text, 
-                        _descController.text, 
-                        _selectedKelas,
-                        _gerbongController.text,
-                        _kuotaController.text
+                        nameController.text, 
+                        descController.text, 
+                        selectedKelas,
+                        gerbongController.text,
+                        kuotaController.text
                       );
                     } else {
                       // Mode Edit
                       success = await provider.updateKereta(
                         item['id'], 
-                        _nameController.text, 
-                        _descController.text, 
-                        _selectedKelas,
-                        _gerbongController.text
+                        nameController.text, 
+                        descController.text, 
+                        selectedKelas,
+                        gerbongController.text
                       );
                     }
 

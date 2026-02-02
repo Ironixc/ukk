@@ -9,7 +9,7 @@ class SearchScheduleScreen extends StatefulWidget {
   final String tujuan;
   final String tanggal;
 
-  SearchScheduleScreen({required this.asal, required this.tujuan, required this.tanggal});
+  const SearchScheduleScreen({super.key, required this.asal, required this.tujuan, required this.tanggal});
 
   @override
   _SearchScheduleScreenState createState() => _SearchScheduleScreenState();

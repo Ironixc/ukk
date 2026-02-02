@@ -9,6 +9,8 @@ import '../passenger/home_screen.dart';
 import '../admin/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }

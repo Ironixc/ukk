@@ -6,6 +6,8 @@ import '../../constants.dart';
 import 'manage_kereta_screen.dart'; // Kita buat setelah ini
 
 class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({super.key});
+
   @override
   Widget build(BuildContext context) {
     var auth = Provider.of<AuthProvider>(context);

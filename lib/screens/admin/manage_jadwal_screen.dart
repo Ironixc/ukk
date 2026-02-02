@@ -5,6 +5,8 @@ import '../../providers/admin_provider.dart';
 import '../../constants.dart';
 
 class ManageJadwalScreen extends StatefulWidget {
+  const ManageJadwalScreen({super.key});
+
   @override
   _ManageJadwalScreenState createState() => _ManageJadwalScreenState();
 }
@@ -47,14 +49,14 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
   }
 
   void _showFormDialog({Map? item}) {
-    final _asalController = TextEditingController(text: item != null ? item['asal_keberangkatan'] : '');
-    final _tujuanController = TextEditingController(text: item != null ? item['tujuan_keberangkatan'] : '');
-    final _hargaController = TextEditingController(text: item != null ? item['harga'].toString() : '');
+    final asalController = TextEditingController(text: item != null ? item['asal_keberangkatan'] : '');
+    final tujuanController = TextEditingController(text: item != null ? item['tujuan_keberangkatan'] : '');
+    final hargaController = TextEditingController(text: item != null ? item['harga'].toString() : '');
     
     // Variabel state lokal untuk dropdown & tanggal
-    String? _selectedKeretaId = item != null ? item['id_kereta'].toString() : null;
-    String _tglBerangkat = item != null ? item['tanggal_berangkat'] : '';
-    String _tglDatang = item != null ? item['tanggal_kedatangan'] : '';
+    String? selectedKeretaId = item != null ? item['id_kereta'].toString() : null;
+    String tglBerangkat = item != null ? item['tanggal_berangkat'] : '';
+    String tglDatang = item != null ? item['tanggal_kedatangan'] : '';
 
     // Ambil list kereta dari provider untuk dropdown
     final listKereta = Provider.of<AdminProvider>(context, listen: false).listKereta;
@@ -72,7 +74,7 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                   children: [
                     // Dropdown Kereta
                     DropdownButtonFormField<String>(
-                      value: _selectedKeretaId,
+                      initialValue: selectedKeretaId,
                       hint: Text("Pilih Kereta"),
                       items: listKereta.map((k) {
                         return DropdownMenuItem(
@@ -81,7 +83,7 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                         );
                       }).toList(),
                       onChanged: (val) {
-                        setStateDialog(() => _selectedKeretaId = val);
+                        setStateDialog(() => selectedKeretaId = val);
                       },
                       decoration: InputDecoration(labelText: "Kereta", border: OutlineInputBorder()),
                     ),
@@ -90,16 +92,16 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                     // Asal & Tujuan
                     Row(
                       children: [
-                        Expanded(child: TextField(controller: _asalController, decoration: InputDecoration(labelText: "Stasiun Asal"))),
+                        Expanded(child: TextField(controller: asalController, decoration: InputDecoration(labelText: "Stasiun Asal"))),
                         SizedBox(width: 10),
-                        Expanded(child: TextField(controller: _tujuanController, decoration: InputDecoration(labelText: "Stasiun Tujuan"))),
+                        Expanded(child: TextField(controller: tujuanController, decoration: InputDecoration(labelText: "Stasiun Tujuan"))),
                       ],
                     ),
                     SizedBox(height: 10),
 
                     // Input Harga
                     TextField(
-                      controller: _hargaController, 
+                      controller: hargaController, 
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(labelText: "Harga Tiket (Rp)", prefixText: "Rp ", border: OutlineInputBorder())
                     ),
@@ -108,11 +110,11 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                     // Picker Tanggal Berangkat
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text("Berangkat: ${_tglBerangkat.isEmpty ? 'Pilih Tanggal' : _tglBerangkat}"),
+                      title: Text("Berangkat: ${tglBerangkat.isEmpty ? 'Pilih Tanggal' : tglBerangkat}"),
                       trailing: Icon(Icons.calendar_today, color: kPrimaryColor),
                       onTap: () async {
-                        String? res = await _pickDateTime(context, initial: _tglBerangkat.isNotEmpty ? _tglBerangkat : null);
-                        if (res != null) setStateDialog(() => _tglBerangkat = res);
+                        String? res = await _pickDateTime(context, initial: tglBerangkat.isNotEmpty ? tglBerangkat : null);
+                        if (res != null) setStateDialog(() => tglBerangkat = res);
                       },
                     ),
                     Divider(),
@@ -120,11 +122,11 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                     // Picker Tanggal Datang
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text("Tiba: ${_tglDatang.isEmpty ? 'Pilih Tanggal' : _tglDatang}"),
+                      title: Text("Tiba: ${tglDatang.isEmpty ? 'Pilih Tanggal' : tglDatang}"),
                       trailing: Icon(Icons.timer, color: kPrimaryColor),
                       onTap: () async {
-                        String? res = await _pickDateTime(context, initial: _tglDatang.isNotEmpty ? _tglDatang : null);
-                        if (res != null) setStateDialog(() => _tglDatang = res);
+                        String? res = await _pickDateTime(context, initial: tglDatang.isNotEmpty ? tglDatang : null);
+                        if (res != null) setStateDialog(() => tglDatang = res);
                       },
                     ),
                   ],
@@ -135,7 +137,7 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
                   onPressed: () async {
-                    if (_selectedKeretaId == null || _tglBerangkat.isEmpty || _asalController.text.isEmpty) {
+                    if (selectedKeretaId == null || tglBerangkat.isEmpty || asalController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data tidak lengkap")));
                       return;
                     }
@@ -143,12 +145,12 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                     Navigator.pop(ctx);
                     
                     final dataToSend = {
-                      'asal_keberangkatan': _asalController.text,
-                      'tujuan_keberangkatan': _tujuanController.text,
-                      'harga': _hargaController.text,
-                      'id_kereta': _selectedKeretaId,
-                      'tanggal_berangkat': _tglBerangkat,
-                      'tanggal_kedatangan': _tglDatang,
+                      'asal_keberangkatan': asalController.text,
+                      'tujuan_keberangkatan': tujuanController.text,
+                      'harga': hargaController.text,
+                      'id_kereta': selectedKeretaId,
+                      'tanggal_berangkat': tglBerangkat,
+                      'tanggal_kedatangan': tglDatang,
                     };
 
                     bool success;

@@ -2,27 +2,32 @@ class UserModel {
   int? id;
   String? username;
   String? role;
-  String? token;
   int? idPelanggan;
+  // Tambahan data profil
+  String? nik;
+  String? namaLengkap;
 
-  UserModel({this.id, this.username, this.role, this.token, this.idPelanggan});
+  UserModel({
+    this.id, 
+    this.username, 
+    this.role, 
+    this.idPelanggan,
+    this.nik,
+    this.namaLengkap
+  });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Ambil data dari objek 'profile' jika ada
+    var profile = json['profile'];
+    
     return UserModel(
-      // --------------------------------------------------------
-      // PERBAIKAN: Gunakan int.parse(...) agar String jadi Angka
-      // --------------------------------------------------------
-      
-      // Mengubah "65" menjadi 65
-      id: int.tryParse(json['user_id'].toString()), 
-      
+      id: int.tryParse(json['user_id'].toString()),
       username: json['username'],
       role: json['role'],
-      
-      // Mengubah ID Profile ("33") menjadi angka 33
-      idPelanggan: json['profile'] != null 
-          ? int.tryParse(json['profile']['id'].toString()) 
-          : null,
+      idPelanggan: profile != null ? int.tryParse(profile['id'].toString()) : null,
+      // Mapping NIK dan Nama dari Profile
+      nik: profile != null ? profile['nik'] : '',
+      namaLengkap: profile != null ? profile['nama_penumpang'] : '',
     );
   }
 }
