@@ -7,29 +7,45 @@ class BookingProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // 1. Ambil List Gerbong berdasarkan Kereta
+  // 1. Ambil List Gerbong berdasarkan ID Kereta
   Future<List<dynamic>> getGerbong(String idKereta) async {
     try {
+      // Pastikan di PHP Anda ada logika: if (isset($_GET['id_kereta'])) ...
       final response = await http.get(Uri.parse('$baseUrl/gerbong.php?id_kereta=$idKereta'));
       final data = json.decode(response.body);
-      return data['status'] == 'success' ? data['data'] : [];
+      
+      if (data['status'] == 'success') {
+        return data['data']; // Mengembalikan List Gerbong
+      } else {
+        return [];
+      }
     } catch (e) {
+      print("Error Get Gerbong: $e");
       return [];
     }
   }
 
-  // 2. Ambil List Kursi berdasarkan Gerbong
-  Future<List<dynamic>> getKursi(String idGerbong) async {
+// 2. Ambil List Kursi (UPDATE: Tambah parameter idJadwal)
+  Future<List<dynamic>> getKursi(String idGerbong, String idJadwal) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/kursi.php?id_gerbong=$idGerbong'));
+      // Kirim id_jadwal ke PHP agar bisa difilter
+      final url = Uri.parse('$baseUrl/kursi.php?id_gerbong=$idGerbong&id_jadwal=$idJadwal');
+      
+      final response = await http.get(url);
       final data = json.decode(response.body);
-      return data['status'] == 'success' ? data['data'] : [];
+      
+      if (data['status'] == 'success') {
+        return data['data']; 
+      } else {
+        return [];
+      }
     } catch (e) {
+      print("Error Get Kursi: $e");
       return [];
     }
   }
 
-  // 3. PROSES BOOKING (Kirim JSON)
+  // 3. Kirim Pesanan (Booking)
   Future<Map<String, dynamic>> orderTiket({
     required int idPelanggan,
     required String idJadwal,
@@ -40,8 +56,6 @@ class BookingProvider with ChangeNotifier {
 
     try {
       final url = Uri.parse('$baseUrl/booking.php');
-      
-      // Kirim sebagai RAW JSON
       final body = json.encode({
         'id_pelanggan': idPelanggan,
         'id_jadwal': idJadwal,
@@ -57,7 +71,6 @@ class BookingProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return json.decode(response.body);
-
     } catch (e) {
       _isLoading = false;
       notifyListeners();

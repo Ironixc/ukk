@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/booking_provider.dart'; // Pastikan file ini ada
+import '../../providers/booking_provider.dart';
 import '../../constants.dart';
 
 class BookingScreen extends StatefulWidget {
-  final Map jadwal; // Data jadwal dilempar dari Search Screen
+  final Map jadwal; // Data dari Search Screen
 
   BookingScreen({required this.jadwal});
 
@@ -17,51 +17,77 @@ class _BookingScreenState extends State<BookingScreen> {
   final _nikController = TextEditingController();
   final _namaController = TextEditingController();
 
-  // Variabel Dropdown
+  // Data List untuk Dropdown
   List<dynamic> _listGerbong = [];
   List<dynamic> _listKursi = [];
+  
+  // Pilihan User
   String? _selectedGerbong;
   String? _selectedKursi;
 
   @override
   void initState() {
     super.initState();
-    // Load Gerbong berdasarkan ID Kereta dari jadwal
-    final provider = Provider.of<BookingProvider>(context, listen: false);
-    provider.getGerbong(widget.jadwal['id_kereta']).then((value) {
-      setState(() => _listGerbong = value);
+    // LOAD GERBONG OTOMATIS SAAT HALAMAN DIBUKA
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadGerbong();
     });
   }
 
-  // Saat Gerbong dipilih, Load Kursi
-  void _onGerbongChanged(String? val) {
+  void _loadGerbong() async {
+    final provider = Provider.of<BookingProvider>(context, listen: false);
+    // Ambil ID Kereta dari data jadwal yang dikirim
+    String idKereta = widget.jadwal['id_kereta'].toString();
+    
+    // Panggil API
+    List<dynamic> hasil = await provider.getGerbong(idKereta);
+    
+    setState(() {
+      _listGerbong = hasil;
+    });
+  }
+
+void _onGerbongChanged(String? val) async {
     setState(() {
       _selectedGerbong = val;
-      _selectedKursi = null; // Reset kursi
-      _listKursi = [];
+      _selectedKursi = null; 
+      _listKursi = [];       
     });
+
     if (val != null) {
-      Provider.of<BookingProvider>(context, listen: false)
-          .getKursi(val)
-          .then((value) {
-            setState(() => _listKursi = value);
+      // Ambil ID Jadwal dari data widget
+      String idJadwal = widget.jadwal['id'].toString();
+
+      // Panggil Provider dengan ID Gerbong DAN ID Jadwal
+      final provider = Provider.of<BookingProvider>(context, listen: false);
+      
+      // UPDATE DISINI: Tambahkan idJadwal
+      List<dynamic> hasil = await provider.getKursi(val, idJadwal);
+      
+      setState(() {
+        _listKursi = hasil;
       });
+
+      // Feedback jika kursi penuh
+      if (hasil.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Maaf, Gerbong ini sudah penuh!"))
+        );
+      }
     }
   }
 
-  // Fungsi Submit Order
   void _submitOrder() async {
     if (_nikController.text.isEmpty || _selectedKursi == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data belum lengkap!")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lengkapi semua data!")));
       return;
     }
 
-    // Kirim data ke Backend
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     final booking = Provider.of<BookingProvider>(context, listen: false);
 
     final result = await booking.orderTiket(
-      idPelanggan: user!.idPelanggan!, 
+      idPelanggan: user!.idPelanggan!,
       idJadwal: widget.jadwal['id'],
       penumpang: [
         {
@@ -81,9 +107,9 @@ class _BookingScreenState extends State<BookingScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                 Navigator.pop(context); // Tutup dialog
-                 Navigator.pop(context); // Tutup booking screen
-                 Navigator.pop(context); // Balik ke Home
+                Navigator.pop(context); // Dialog
+                Navigator.pop(context); // Booking
+                Navigator.pop(context); // Search
               }, 
               child: Text("OK")
             )
@@ -106,35 +132,49 @@ class _BookingScreenState extends State<BookingScreen> {
           children: [
             // Info Kereta
             Container(
+              width: double.infinity,
               padding: EdgeInsets.all(15),
-              color: Colors.blue[50],
-              child: Text("Kereta: ${widget.jadwal['nama_kereta']} - ${widget.jadwal['kelas']}", 
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(10)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.jadwal['nama_kereta'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text("Kelas: ${widget.jadwal['kelas']}"),
+                  SizedBox(height: 5),
+                  Text("Harga: Rp ${widget.jadwal['harga']}", style: TextStyle(color: kSecondaryColor, fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
             SizedBox(height: 20),
 
-            // Form Input
+            // Input Form
             TextField(controller: _nikController, decoration: InputDecoration(labelText: "NIK", border: OutlineInputBorder())),
             SizedBox(height: 10),
             TextField(controller: _namaController, decoration: InputDecoration(labelText: "Nama Lengkap", border: OutlineInputBorder())),
             SizedBox(height: 20),
 
             // Dropdown Gerbong
+            Text("Pilih Gerbong", style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 5),
             DropdownButtonFormField<String>(
               value: _selectedGerbong,
-              hint: Text("Pilih Gerbong"),
+              hint: Text(_listGerbong.isEmpty ? "Memuat Gerbong..." : "Pilih Gerbong"),
+              isExpanded: true,
               items: _listGerbong.map((g) {
                 return DropdownMenuItem(value: g['id'].toString(), child: Text(g['nama_gerbong']));
               }).toList(),
               onChanged: _onGerbongChanged,
               decoration: InputDecoration(border: OutlineInputBorder()),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 15),
 
             // Dropdown Kursi
+            Text("Pilih Kursi", style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 5),
             DropdownButtonFormField<String>(
               value: _selectedKursi,
-              hint: Text("Pilih Kursi"),
+              hint: Text(_selectedGerbong == null ? "Pilih Gerbong Dulu" : "Pilih Kursi"),
+              isExpanded: true,
               items: _listKursi.map((k) {
                 return DropdownMenuItem(value: k['id'].toString(), child: Text("No. ${k['no_kursi']}"));
               }).toList(),
@@ -143,14 +183,20 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
             SizedBox(height: 30),
 
-            // Tombol Bayar
+            // Tombol Pesan
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: kSecondaryColor),
-                onPressed: _submitOrder,
-                child: Text("PESAN SEKARANG", style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Consumer<BookingProvider>(
+                builder: (context, booking, _) {
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: kSecondaryColor),
+                    onPressed: booking.isLoading ? null : _submitOrder,
+                    child: booking.isLoading 
+                      ? CircularProgressIndicator(color: Colors.white) 
+                      : Text("PESAN SEKARANG", style: TextStyle(fontWeight: FontWeight.bold)),
+                  );
+                }
               ),
             )
           ],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/admin_provider.dart'; // Kita pakai AdminProvider utk fetch jadwal
+import '../../providers/admin_provider.dart'; 
 import '../../constants.dart';
-import 'booking_screen.dart'; // Kita hubungkan ke file ke-3
+import 'booking_screen.dart'; 
 
 class SearchScheduleScreen extends StatefulWidget {
   final String asal;
@@ -19,7 +19,7 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
   @override
   void initState() {
     super.initState();
-    // Ambil data jadwal dari server saat halaman dibuka
+    // Tarik data jadwal saat halaman dibuka
     Future.microtask(() => 
       Provider.of<AdminProvider>(context, listen: false).getJadwal()
     );
@@ -28,15 +28,12 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("${widget.asal} ➝ ${widget.tujuan}"),
-        backgroundColor: kPrimaryColor,
-      ),
+      appBar: AppBar(title: Text("${widget.asal} ➝ ${widget.tujuan}"), backgroundColor: kPrimaryColor),
       body: Consumer<AdminProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) return Center(child: CircularProgressIndicator());
 
-          // LOGIKA FILTER: Hanya tampilkan jadwal yang sesuai Asal & Tujuan
+          // Filter Jadwal Sesuai Pencarian
           final filteredList = provider.listJadwal.where((jadwal) {
             String dbAsal = jadwal['asal_keberangkatan'].toString().toLowerCase();
             String dbTujuan = jadwal['tujuan_keberangkatan'].toString().toLowerCase();
@@ -44,9 +41,7 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
                    dbTujuan.contains(widget.tujuan.toLowerCase());
           }).toList();
 
-          if (filteredList.isEmpty) {
-            return Center(child: Text("Tidak ada jadwal kereta ditemukan."));
-          }
+          if (filteredList.isEmpty) return Center(child: Text("Jadwal tidak ditemukan."));
 
           return ListView.builder(
             padding: EdgeInsets.all(15),
@@ -59,7 +54,7 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 child: InkWell(
                   onTap: () {
-                    // NAVIGASI KE SCREEN 3 (BOOKING)
+                    // Masuk ke Halaman Booking dengan membawa Data Jadwal
                     Navigator.push(context, MaterialPageRoute(
                       builder: (_) => BookingScreen(jadwal: item)
                     ));
@@ -79,9 +74,9 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("${item['asal_keberangkatan']}\n${item['tanggal_berangkat']}"),
+                            Text("Berangkat\n${item['tanggal_berangkat']}", style: TextStyle(fontSize: 12)),
                             Icon(Icons.arrow_forward, color: Colors.grey),
-                            Text("${item['tujuan_keberangkatan']}\n${item['tanggal_kedatangan']}", textAlign: TextAlign.right),
+                            Text("Tiba\n${item['tanggal_kedatangan']}", textAlign: TextAlign.right, style: TextStyle(fontSize: 12)),
                           ],
                         ),
                       ],
