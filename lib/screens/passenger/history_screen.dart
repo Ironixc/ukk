@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; // flutter pub add intl
+import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/history_provider.dart';
 import '../../constants.dart';
-import 'ticket_detail_screen.dart'; // Kita buat setelah ini
+import 'ticket_detail_screen.dart';
+import 'payment_screen.dart'; // Import Payment untuk bayar utang
 
 class HistoryScreen extends StatefulWidget {
   @override
@@ -15,7 +16,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data saat halaman dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
       if (user != null) {
@@ -27,7 +27,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Riwayat Perjalanan"), backgroundColor: kPrimaryColor),
+      appBar: AppBar(title: Text("Riwayat Perjalanan"), backgroundColor: kPrimaryColor, automaticallyImplyLeading: false),
       body: Consumer<HistoryProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) return Center(child: CircularProgressIndicator());
@@ -45,13 +45,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
             );
           }
 
-          return ListView.builder(
-            padding: EdgeInsets.all(15),
-            itemCount: provider.riwayat.length,
-            itemBuilder: (context, index) {
-              final item = provider.riwayat[index];
-              return _buildHistoryCard(item);
+          return RefreshIndicator(
+            onRefresh: () async {
+              final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
+              await Provider.of<HistoryProvider>(context, listen: false).getHistory(user!.idPelanggan!);
             },
+            child: ListView.builder(
+              padding: EdgeInsets.all(15),
+              itemCount: provider.riwayat.length,
+              itemBuilder: (context, index) {
+                final item = provider.riwayat[index];
+                return _buildHistoryCard(item);
+              },
+            ),
           );
         },
       ),
@@ -59,9 +65,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildHistoryCard(Map item) {
-    // Format Tanggal Cantik
     DateTime tgl = DateTime.parse(item['tanggal_berangkat']);
     String formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(tgl);
+
+    // Cek Status (Default pending jika null)
+    String status = item['status_pembayaran'] ?? 'pending';
+    bool isLunas = status == 'lunas';
 
     return Card(
       margin: EdgeInsets.only(bottom: 15),
@@ -69,10 +78,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: InkWell(
         onTap: () {
-          // Buka Detail Tiket
-          Navigator.push(context, MaterialPageRoute(
-            builder: (_) => TicketDetailScreen(data: item)
-          ));
+          // Hanya bisa lihat detail jika LUNAS
+          if (isLunas) {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (_) => TicketDetailScreen(data: item)
+            ));
+          } else {
+             _goToPayment(item);
+          }
         },
         child: Padding(
           padding: EdgeInsets.all(15),
@@ -83,10 +96,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(item['nama_kereta'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  
+                  // BADGE STATUS
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.green[100], borderRadius: BorderRadius.circular(5)),
-                    child: Text("LUNAS", style: TextStyle(color: Colors.green[800], fontSize: 10, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(
+                      color: isLunas ? Colors.green[100] : Colors.orange[100],
+                      borderRadius: BorderRadius.circular(5)
+                    ),
+                    child: Text(
+                      isLunas ? "LUNAS" : "BELUM BAYAR", 
+                      style: TextStyle(
+                        color: isLunas ? Colors.green[800] : Colors.orange[900], 
+                        fontSize: 10, fontWeight: FontWeight.bold
+                      )
+                    ),
                   )
                 ],
               ),
@@ -112,7 +136,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("${item['detail_penumpang'].length} Penumpang", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  Text("Rp ${item['total_harga']}", style: TextStyle(fontWeight: FontWeight.bold, color: kSecondaryColor, fontSize: 16)),
+                  
+                  // LOGIC TOMBOL KANAN BAWAH
+                  isLunas 
+                  ? Text("Rp ${item['total_harga']}", style: TextStyle(fontWeight: FontWeight.bold, color: kSecondaryColor, fontSize: 16))
+                  : ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kSecondaryColor,
+                        padding: EdgeInsets.symmetric(horizontal: 15),
+                        minimumSize: Size(0, 30)
+                      ),
+                      onPressed: () => _goToPayment(item),
+                      child: Text("BAYAR SEKARANG", style: TextStyle(fontSize: 12)),
+                    )
                 ],
               )
             ],
@@ -120,5 +156,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
     );
+  }
+
+  void _goToPayment(Map item) {
+    int id = int.parse(item['id_pembelian'].toString());
+    int total = int.parse(item['total_harga'].toString());
+
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => PaymentScreen(idPembelian: id, totalHarga: total)
+    )).then((_) {
+      // Refresh saat kembali
+      final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
+      if(user != null) Provider.of<HistoryProvider>(context, listen: false).getHistory(user.idPelanggan!);
+    });
   }
 }

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
-import '../../widgets/seat_map_widget.dart'; // Import Widget Baru
+import '../../widgets/seat_map_widget.dart'; // Widget Denah Kursi
 import '../../constants.dart';
+import 'payment_screen.dart'; // <--- PENTING: Import Halaman Pembayaran
 
 class BookingScreen extends StatefulWidget {
   final Map jadwal; // Data jadwal dari halaman sebelumnya
@@ -43,7 +44,7 @@ class _BookingScreenState extends State<BookingScreen> {
     _passengers.add({
       'nik': TextEditingController(text: user?.nik ?? ''),
       'nama': TextEditingController(text: user?.namaLengkap ?? ''),
-      'kursi': null, // Nanti diisi dari Seat Map
+      'kursi': null, 
       'is_user': true,
     });
   }
@@ -57,7 +58,7 @@ class _BookingScreenState extends State<BookingScreen> {
         'kursi': null,
         'is_user': false,
       });
-      // Saat tambah orang, reset pilihan kursi agar milih ulang yg pas
+      // Reset pilihan kursi saat jumlah orang berubah
       _mySelectedSeatIds = [];
       for (var p in _passengers) p['kursi'] = null;
     });
@@ -67,7 +68,7 @@ class _BookingScreenState extends State<BookingScreen> {
   void _removePassenger(int index) {
     setState(() {
       _passengers.removeAt(index);
-      _mySelectedSeatIds = []; // Reset pilihan kursi
+      _mySelectedSeatIds = []; 
        for (var p in _passengers) p['kursi'] = null;
     });
   }
@@ -93,21 +94,20 @@ class _BookingScreenState extends State<BookingScreen> {
       final provider = Provider.of<BookingProvider>(context, listen: false);
       String idJadwal = widget.jadwal['id'].toString();
 
-      // STEP A: Ambil SEMUA kursi di gerbong ini (Tanpa Filter Jadwal)
-      // Gunakan parameter idJadwal kosong '' agar PHP mengembalikan semua kursi
+      // STEP A: Ambil SEMUA kursi (Tanpa Filter Jadwal) -> Untuk Gambar Denah
       List<dynamic> allSeats = await provider.getKursi(val, '');
       
       // STEP B: Ambil kursi yang TERSEDIA (Dengan Filter Jadwal)
       List<dynamic> availableSeats = await provider.getKursi(val, idJadwal);
 
-      // STEP C: Bandingkan untuk mencari kursi TERISI (Occupied)
+      // STEP C: Bandingkan -> Cari kursi TERISI
       Set<String> availIds = availableSeats.map((e) => e['id'].toString()).toSet();
       List<String> occupiedList = [];
 
       for (var s in allSeats) {
         String sId = s['id'].toString();
         if (!availIds.contains(sId)) {
-          occupiedList.add(sId); // Jika tidak ada di available, berarti terisi
+          occupiedList.add(sId); 
         }
       }
 
@@ -127,11 +127,11 @@ class _BookingScreenState extends State<BookingScreen> {
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Fullscreen style
+      isScrollControlled: true, 
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.85, // 85% layar
+          height: MediaQuery.of(context).size.height * 0.85, 
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20))
@@ -146,7 +146,6 @@ class _BookingScreenState extends State<BookingScreen> {
                        style: TextStyle(color: Colors.grey)),
                   Divider(),
                   
-                  // WIDGET DENAH KURSI
                   Expanded(
                     child: SeatMapWidget(
                       allSeats: _allSeatsInGerbong,
@@ -161,12 +160,10 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                   ),
 
-                  // TOMBOL SIMPAN
                   SizedBox(width: double.infinity, height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
                       onPressed: () {
-                        // VALIDASI JUMLAH
                         if (_mySelectedSeatIds.length != _passengers.length) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                             content: Text("Anda harus memilih ${_passengers.length} kursi!")
@@ -174,14 +171,12 @@ class _BookingScreenState extends State<BookingScreen> {
                           return;
                         }
 
-                        // MAPPING KURSI KE PENUMPANG
-                        // Kursi pertama untuk penumpang 1, dst.
                         setState(() {
                            for (int i = 0; i < _passengers.length; i++) {
                              _passengers[i]['kursi'] = _mySelectedSeatIds[i];
                            }
                         });
-                        Navigator.pop(context); // Tutup Modal
+                        Navigator.pop(context); 
                       },
                       child: Text("SIMPAN PILIHAN"),
                     ),
@@ -195,9 +190,9 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  // 5. SUBMIT KE DATABASE
+  // 5. SUBMIT ORDER & PINDAH KE PAYMENT
   void _submitOrder() async {
-    // Cek kelengkapan
+    // Cek kelengkapan data
     bool isIncomplete = _passengers.any((p) => 
       p['nik'].text.isEmpty || p['nama'].text.isEmpty || p['kursi'] == null
     );
@@ -210,7 +205,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     final booking = Provider.of<BookingProvider>(context, listen: false);
 
-    // Format Data
+    // Format Data JSON
     List<Map<String, dynamic>> payload = _passengers.map((p) {
       return {
         'nik': p['nik'].text,
@@ -219,6 +214,7 @@ class _BookingScreenState extends State<BookingScreen> {
       };
     }).toList();
 
+    // KIRIM KE SERVER
     final result = await booking.orderTiket(
       idPelanggan: user!.idPelanggan!,
       idJadwal: widget.jadwal['id'],
@@ -226,26 +222,29 @@ class _BookingScreenState extends State<BookingScreen> {
     );
 
     if (result['status'] == 'success') {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          title: Text("Berhasil!"),
-          content: Text("Tiket berhasil dipesan."),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-              child: Text("OK"),
-            )
-          ],
+      // --- LOGIC BARU: PINDAH KE HALAMAN BAYAR ---
+      
+      // Ambil ID Pembelian dari PHP
+      // Gunakan int.parse untuk jaga-jaga kalau server kirim string
+      int idPembelian = int.parse(result['id_pembelian'].toString());
+      
+      // Hitung Total Harga (Harga x Jumlah Penumpang)
+      int hargaSatuan = int.parse(widget.jadwal['harga'].toString());
+      int totalHarga = hargaSatuan * _passengers.length;
+
+      // Navigasi ke PaymentScreen
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PaymentScreen(
+          idPembelian: idPembelian,
+          totalHarga: totalHarga,
         )
-      );
+      ));
+      
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: ${result['message']}")));
     }
   }
 
-  // HELPER UNTUK DAPAT NOMOR KURSI DARI ID
   String _getSeatDisplay(String? id) {
     if (id == null) return "Belum dipilih";
     try {
@@ -328,14 +327,16 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               SizedBox(height: 30),
 
-              // TOMBOL BAYAR
+              // TOMBOL LANJUT BAYAR
               SizedBox(
                 width: double.infinity, height: 50,
                 child: Consumer<BookingProvider>(
                   builder: (ctx, booking, _) => ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: kSecondaryColor),
                     onPressed: booking.isLoading ? null : _submitOrder,
-                    child: booking.isLoading ? CircularProgressIndicator(color: Colors.white) : Text("BAYAR SEKARANG", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: booking.isLoading 
+                      ? CircularProgressIndicator(color: Colors.white) 
+                      : Text("LANJUT PEMBAYARAN", style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -370,7 +371,7 @@ class _BookingScreenState extends State<BookingScreen> {
               decoration: InputDecoration(labelText: "NIK", filled: isUser, fillColor: Colors.grey[100]),
             ),
             SizedBox(height: 8),
-            // DISPLAY KURSI (Bukan Dropdown)
+            // DISPLAY KURSI
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(10),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants.dart'; // Pastikan file constants.dart ada
 
 class SeatMapWidget extends StatefulWidget {
   final List<dynamic> allSeats;         // Semua data kursi (untuk digambar)

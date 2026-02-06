@@ -77,4 +77,34 @@ class BookingProvider with ChangeNotifier {
       return {'status': 'error', 'message': e.toString()};
     }
   }
+  Future<bool> processPayment(int idPembelian, String metode) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse('$baseUrl/payment.php');
+      final response = await http.post(
+        url,
+        body: json.encode({
+          'id_pembelian': idPembelian,
+          'metode_pembayaran': metode,
+        }),
+      );
+
+      final data = json.decode(response.body);
+      _isLoading = false;
+      notifyListeners();
+
+      if (data['status'] == 'success') {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      print("Payment Error: $e");
+      return false;
+    }
+  }
 }

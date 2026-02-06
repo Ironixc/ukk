@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart'; // Tambahkan ini
+import 'package:provider/provider.dart';
 import '../../constants.dart';
-import '../../providers/auth_provider.dart'; // Tambahkan ini
+import '../../providers/auth_provider.dart';
 import 'search_schedule_screen.dart';
-import 'history_screen.dart'; // <--- PENTING: Import History Screen
+import 'history_screen.dart'; // Import History
+import 'account_screen.dart'; // Import Account
 
 class PassengerHomeScreen extends StatefulWidget {
-  const PassengerHomeScreen({super.key});
+  final int initialIndex; // Parameter untuk menentukan tab awal
+
+  const PassengerHomeScreen({super.key, this.initialIndex = 0});
 
   @override
   _PassengerHomeScreenState createState() => _PassengerHomeScreenState();
@@ -18,8 +21,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   String _stasiunTujuan = "Pilih Stasiun...";
   DateTime _tanggalBerangkat = DateTime.now();
   
-  // Index 0 = Home, 1 = Riwayat/Tiket, 2 = Akun
-  int _selectedIndex = 0; 
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // SET TAB SESUAI REQUEST (Misal: dari Payment minta buka tab 1)
+    _selectedIndex = widget.initialIndex;
+  }
 
   Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
@@ -52,62 +61,37 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // [DIAGRAM LOGIC]
-    // Kita gunakan List<Widget> atau Switch Case untuk body.
-    // Tapi cara termudah adalah IF-ELSE atau method terpisah di body.
-    
     return Scaffold(
       backgroundColor: Colors.grey[100],
       
-      // BOTTOM NAVIGATION BAR
+      // BOTTOM NAVIGATION
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: kPrimaryColor,
         type: BottomNavigationBarType.fixed,
-        onTap: (i) => setState(() => _selectedIndex = i), // Mengubah Index saat diklik
+        onTap: (i) => setState(() => _selectedIndex = i),
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(icon: Icon(Icons.confirmation_number), label: "Tiket"), // Ini ke History
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"), // Ini ke Profil/Logout
+          BottomNavigationBarItem(icon: Icon(Icons.confirmation_number), label: "Tiket"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
         ],
       ),
 
-      // BODY (DINAMIS BERDASARKAN PILIHAN MENU)
-      body: _getSelectedPage(), 
+      // BODY SWITCHER
+      body: _getSelectedPage(),
     );
   }
 
-  // --- FUNGSI PENGATUR HALAMAN ---
   Widget _getSelectedPage() {
     switch (_selectedIndex) {
-      case 0:
-        return _buildHomeContent(); // Tampilan Cari Tiket (Pindahkan kodingan lama kesini)
-      case 1:
-        return HistoryScreen(); // <--- INI DIA: Tampilan Riwayat Transaksi
-      case 2:
-        return _buildAccountContent(); // Tampilan Akun (Logout)
-      default:
-        return _buildHomeContent();
+      case 0: return _buildHomeContent();
+      case 1: return HistoryScreen(); // Ke Halaman Riwayat
+      case 2: return AccountScreen(); // Ke Halaman Akun
+      default: return _buildHomeContent();
     }
   }
 
-  // --- HALAMAN AKUN (LOGOUT) ---
-  Widget _buildAccountContent() {
-    return Center(
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-        icon: Icon(Icons.logout, color: Colors.white),
-        label: Text("LOGOUT", style: TextStyle(color: Colors.white)),
-        onPressed: () {
-          // Fungsi Logout
-          Provider.of<AuthProvider>(context, listen: false).logout();
-          Navigator.of(context).pushReplacementNamed('/'); // Balik ke Login
-        },
-      ),
-    );
-  }
-
-  // --- HALAMAN HOME (KODINGAN LAMA ANDA DIPINDAH KESINI) ---
+  // KONTEN BERANDA (SEARCH TIKET)
   Widget _buildHomeContent() {
     return SingleChildScrollView(
       child: Column(
