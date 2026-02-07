@@ -3,8 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ukk/screens/passenger/home_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../../constants.dart';
-import 'register_screen.dart'; // Pastikan import halaman register
-// Import halaman Dashboard Anda
+import 'register_screen.dart';
 import '../admin/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,10 +15,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   // Controller untuk mengambil input text
-  final _identifierController = TextEditingController(); // Username atau Nama
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   
-  // Variabel untuk fitur lihat/sembunyi password
+  //sembunyi password
   bool _isPasswordVisible = false;
 
   @override
@@ -53,13 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         if (role == 'admin') {
-          // Ke Dashboard Petugas
           Navigator.pushReplacement(
             context, 
             MaterialPageRoute(builder: (_) => DashboardScreen())
           );
         } else {
-          // Ke Home Penumpang
           Navigator.pushReplacement(
             context, 
             MaterialPageRoute(builder: (_) => PassengerHomeScreen())
@@ -67,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } else {
-      // Jika Gagal
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -90,10 +86,10 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             // ------------------------------------------------
-            // BAGIAN HEADER (Lengkung Biru)
+            // BAGIAN HEADER 
             // ------------------------------------------------
             Container(
-              height: size.height * 0.35, // 35% dari tinggi layar
+              height: size.height * 0.35,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: kPrimaryColor,
@@ -144,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   SizedBox(height: 30),
 
-                  // Input Username / Identifier
+                  // Input Username
                   TextField(
                     controller: _identifierController,
                     decoration: InputDecoration(
@@ -167,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       labelText: "Password",
                       prefixIcon: Icon(Icons.lock_outline, color: kPrimaryColor),
-                      // Tombol mata (show/hide)
+                      // show/hide
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
@@ -197,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       builder: (context, auth, child) {
                         return ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: kSecondaryColor, // Warna Oranye
+                            backgroundColor: kSecondaryColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

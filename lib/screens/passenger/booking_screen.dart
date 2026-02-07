@@ -9,7 +9,7 @@ import 'payment_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   final Map jadwal; 
-  final int passengerCount; // Parameter baru: Jumlah Penumpang dari halaman Search
+  final int passengerCount; //Jumlah Penumpang dari halaman Search
 
   // Default 1 jika tidak ada data lemparan
   BookingScreen({required this.jadwal, this.passengerCount = 1});
@@ -42,7 +42,7 @@ class _BookingScreenState extends State<BookingScreen> {
     });
   }
 
-  // 1. GENERATE FORM SESUAI JUMLAH PENUMPANG (FIXED)
+  // 1. GENERATE FORM SESUAI JUMLAH PENUMPANG
   void _initPassengers() {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     
@@ -75,8 +75,6 @@ class _BookingScreenState extends State<BookingScreen> {
     setState(() {
       _selectedGerbong = val;
       _isLoadingKursi = true;
-      // Jangan reset penumpang kursi disini agar user tidak kehilangan pilihan jika cuma iseng ganti gerbong
-      // Tapi untuk safety, kita reset visual map-nya saja
       _allSeatsInGerbong = [];
     });
 
@@ -138,7 +136,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   Divider(),
                   
-                  // Pilihan Gerbong di dalam Modal (Opsional, tapi bagus ada)
+                  // Pilihan Gerbong di dalam Modal
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
@@ -315,7 +313,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   Text("Data Penumpang", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   SizedBox(height: 10),
 
-                  // LIST FORM PENUMPANG (SESUAI JUMLAH YG DIPESAN)
+                  // LIST FORM PENUMPANG
                   ListView.separated(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
@@ -326,7 +324,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
                   SizedBox(height: 20),
 
-                  // CARD PILIH KURSI (GAYA KAI ACCESS)
+                  // CARD PILIH KURSI
                   _buildSeatSelectionCard(),
                   
                   SizedBox(height: 20),
@@ -429,7 +427,7 @@ class _BookingScreenState extends State<BookingScreen> {
           // Input Nama
           TextField(
             controller: p['nama'],
-            readOnly: p['is_user'], // Kalau user login, gak bisa edit nama (opsional)
+            readOnly: p['is_user'], 
             style: TextStyle(fontWeight: FontWeight.bold),
             decoration: InputDecoration(
               labelText: "Nama Lengkap",

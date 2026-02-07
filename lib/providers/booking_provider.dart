@@ -19,7 +19,6 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Pastikan file jadwal.php Anda menangani parameter tanggal
       final url = Uri.parse('$baseUrl/jadwal.php?asal=$asal&tujuan=$tujuan&tanggal=$tanggal');
       
       final response = await http.get(url);

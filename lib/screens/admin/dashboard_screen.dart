@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import 'manage_kereta_screen.dart'; // Import separate file
-import 'manage_jadwal_screen.dart'; // Import separate file
+import 'manage_kereta_screen.dart';
+import 'manage_jadwal_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   @override
@@ -10,7 +10,7 @@ class DashboardScreen extends StatelessWidget {
     final user = Provider.of<AuthProvider>(context).currentUser;
 
     return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA), // Very light grey (Google style)
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -34,7 +34,7 @@ class DashboardScreen extends StatelessWidget {
             Text("${user?.namaLengkap ?? 'Administrator'}", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF202124))),
             SizedBox(height: 30),
 
-            // GRID MENU (Only 2 Items)
+            // GRID MENU
             GridView.count(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),

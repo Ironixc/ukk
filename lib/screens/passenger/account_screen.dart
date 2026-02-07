@@ -14,8 +14,8 @@ class _AccountScreenState extends State<AccountScreen> {
   void _showEditProfileDialog() {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     final _namaController = TextEditingController(text: user?.namaLengkap);
-    final _alamatController = TextEditingController(text: "Alamat belum diset"); // Ganti jika ada di model
-    final _telpController = TextEditingController(text: "0812xxxx"); // Ganti jika ada di model
+    final _alamatController = TextEditingController(text: "Alamat belum diset"); 
+    final _telpController = TextEditingController(text: "0812xxxx"); 
 
     showDialog(
       context: context,
@@ -31,24 +31,21 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Batal")),
-   // ... (kode sebelumnya sama)
+ 
 
           // ElevatedButton(
           //   style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
           //   onPressed: () async {
-          //     // Validasi Input Kosong
           //     if (_namaController.text.isEmpty) {
           //        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Nama tidak boleh kosong")));
           //        return;
           //     }
 
-          //     // Panggil Fungsi Update yang Baru
           //     final result = await Provider.of<AuthProvider>(context, listen: false)
           //         .updateProfile(_namaController.text, _alamatController.text, _telpController.text);
               
-          //     Navigator.pop(ctx); // Tutup Dialog
+          //     Navigator.pop(ctx);
 
-          //     // Tampilkan Pesan Hasil (Sukses / Error Spesifik)
           //     if (result['success']) {
           //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           //         content: Text(result['message']),
@@ -59,14 +56,13 @@ class _AccountScreenState extends State<AccountScreen> {
           //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           //         content: Text("Gagal: ${result['message']}"),
           //         backgroundColor: Colors.red,
-          //         duration: Duration(seconds: 4), // Lama dikit biar sempet baca
+          //         duration: Duration(seconds: 4),
           //       ));
           //     }
           //   }, 
           //   child: Text("Simpan")
           // )
           
-          // ... (kode setelahnya sama)
         ],
       )
     );
@@ -137,7 +133,7 @@ class _AccountScreenState extends State<AccountScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. HEADER PROFIL (Warna Biru)
+            // 1. HEADER PROFIL
             Container(
               width: double.infinity,
               padding: EdgeInsets.fromLTRB(20, 60, 20, 30),

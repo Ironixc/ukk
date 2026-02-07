@@ -8,7 +8,7 @@ class AdminProvider with ChangeNotifier {
   
   // VARIABLE DATA
   List<dynamic> _listKereta = [];
-  List<dynamic> _listJadwal = []; // Ganti nama biar konsisten
+  List<dynamic> _listJadwal = [];
 
   // GETTERS
   bool get isLoading => _isLoading;
@@ -113,7 +113,7 @@ class AdminProvider with ChangeNotifier {
   // ===========================================================================
 
   // 1. GET JADWAL (ADMIN VERSION - NO PARAMS)
-  // Admin mengambil SEMUA jadwal, tidak perlu parameter filter seperti user
+  // Admin mengambil SEMUA jadwal
   Future<void> getJadwal() async {
     _isLoading = true;
     notifyListeners();
@@ -125,7 +125,7 @@ class AdminProvider with ChangeNotifier {
       final data = json.decode(response.body);
 
       if (data['status'] == 'success') {
-        _listJadwal = data['data']; // Simpan ke variable _listJadwal
+        _listJadwal = data['data']; 
       } else {
         _listJadwal = [];
       }
@@ -148,7 +148,7 @@ class AdminProvider with ChangeNotifier {
       final data = json.decode(response.body);
       
       if (data['status'] == 'success') {
-        await getJadwal(); // Refresh list (sekarang valid karena tanpa param)
+        await getJadwal();  
         return true;
       }
       return false;
@@ -168,7 +168,7 @@ class AdminProvider with ChangeNotifier {
       final data = json.decode(response.body);
 
       if (data['status'] == 'success') {
-        await getJadwal(); // Refresh list
+        await getJadwal(); 
         return true;
       }
       return false;
@@ -184,7 +184,7 @@ class AdminProvider with ChangeNotifier {
       final data = json.decode(response.body);
       
       if (data['status'] == 'success') {
-        _listJadwal.removeWhere((item) => item['id'] == id); // Variable sudah benar
+        _listJadwal.removeWhere((item) => item['id'] == id); 
         notifyListeners();
         return "success";
       }

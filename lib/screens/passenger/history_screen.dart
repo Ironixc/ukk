@@ -27,7 +27,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF0F2F5), // Background abu sedikit lebih gelap biar kartu pop-up
+      backgroundColor: Color(0xFFF0F2F5),
       appBar: AppBar(
         title: Text("Tiket Saya", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), 
         backgroundColor: kPrimaryColor, 
@@ -84,7 +84,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       tglTiba = DateTime.now();
     }
     
-    // Format String
     String hariTanggal = DateFormat('EEE, d MMM yyyy').format(tglBerangkat);
     String jamBerangkat = DateFormat('HH:mm').format(tglBerangkat);
     String jamTiba = DateFormat('HH:mm').format(tglTiba);
@@ -175,7 +174,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                   SizedBox(height: 20),
                   
-                  // TIMELINE (Layout Grid yang Rapi)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start, // Align Top
                     children: [
@@ -184,7 +182,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(jamBerangkat, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          SizedBox(height: 28), // Spasi vertikal manual agar sejajar
+                          SizedBox(height: 28),
                           Text(jamTiba, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
@@ -194,11 +192,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       // KOLOM 2: GRAFIS GARIS
                       Column(
                         children: [
-                          SizedBox(height: 4), // Adjustment kecil biar pas sama text jam
+                          SizedBox(height: 4),
                           Icon(Icons.circle, size: 12, color: kSecondaryColor),
                           Container(
                             width: 2, 
-                            height: 35, // Tinggi garis penghubung
+                            height: 35,
                             color: Colors.grey[300],
                           ),
                           Icon(Icons.circle, size: 12, color: kPrimaryColor),
@@ -236,7 +234,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isLunas ? Colors.grey[50] : Colors.orange[50], // Background beda kalau belum bayar
+                color: isLunas ? Colors.grey[50] : Colors.orange[50], // Warna footer beda kalau belum bayar
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(12))
               ),
               child: Row(
@@ -248,7 +246,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Icon(Icons.people, size: 16, color: Colors.grey[600]),
                       SizedBox(width: 5),
                       Text(
-                        "$jumlahPenumpang Penumpang", // <--- INI SUDAH MUNCUL
+                        "$jumlahPenumpang Penumpang",
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700])
                       ),
                     ],

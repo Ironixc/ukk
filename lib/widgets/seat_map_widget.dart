@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class SeatMapWidget extends StatefulWidget {
-  final List<dynamic> allSeats;         // Semua data kursi (untuk digambar)
-  final List<String> occupiedSeats;     // ID kursi yang SUDAH DIBELI orang lain
-  final List<String> selectedSeats;     // ID kursi yang SAYA PILIH sekarang
-  final int passengerCount;             // Jumlah penumpang (batas max pilih)
-  final Function(List<String>) onSeatSelected; // Callback ke halaman booking
+  final List<dynamic> allSeats;         
+  final List<String> occupiedSeats;     
+  final List<String> selectedSeats;     
+  final int passengerCount;             
+  final Function(List<String>) onSeatSelected; 
 
   const SeatMapWidget({
     Key? key,
@@ -23,13 +23,12 @@ class SeatMapWidget extends StatefulWidget {
 class _SeatMapWidgetState extends State<SeatMapWidget> {
   @override
   Widget build(BuildContext context) {
-    // Kita asumsikan layout kereta adalah 2-2 (A B - C D)
+    // asumsikan layout kereta adalah 2-2 (A B - C D)
     // Jadi setiap 4 kursi akan membentuk 1 baris baru
     int totalRows = (widget.allSeats.length / 4).ceil();
 
     return Column(
       children: [
-        // 1. LEGEND (KETERANGAN WARNA)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -53,7 +52,7 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
         ),
         SizedBox(height: 10),
 
-        // 3. GRID KURSI (SCROLLABLE)
+        // 3. GRID KURSI
         Expanded(
           child: ListView.builder(
             itemCount: totalRows,
@@ -72,7 +71,7 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
                     _buildSeatItem(startIdx),     // A
                     _buildSeatItem(startIdx + 1), // B
                     
-                    // NOMOR BARIS (LORONG)
+                    // NOMOR BARIS 
                     Container(
                       width: 40,
                       child: Center(
@@ -96,9 +95,9 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
     );
   }
 
-  // WIDGET KOTAK SATU KURSI
+  // WIDGET 
   Widget _buildSeatItem(int index) {
-    // Cek validasi index (jika kursi ganjil/sisa)
+    // Cek validasi index data kursi
     if (index >= widget.allSeats.length) {
       return Container(width: 45, height: 45, margin: EdgeInsets.symmetric(horizontal: 4)); // Kotak kosong
     }
@@ -106,7 +105,6 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
     final seat = widget.allSeats[index];
     String seatId = seat['id'].toString();
     
-    // Tentukan Status & Warna
     bool isOccupied = widget.occupiedSeats.contains(seatId); 
     bool isSelected = widget.selectedSeats.contains(seatId);
     
@@ -114,21 +112,21 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
     Color borderColor = Colors.grey[400]!;
     
     if (isOccupied) {
-      boxColor = Colors.orange[800]!;       // Terisi (Orange Gelap)
+      boxColor = Colors.orange[800]!;       
       borderColor = Colors.orange[900]!;
     } else if (isSelected) {
-      boxColor = Colors.blue;               // Dipilih (Biru)
+      boxColor = Colors.blue;               
       borderColor = Colors.blueAccent;
     }
 
     return GestureDetector(
       onTap: () {
-        if (isOccupied) return; // Dilarang pilih kursi orang
+        if (isOccupied) return; // Tidak bisa pilih kursi terisi
 
         List<String> newSelection = List.from(widget.selectedSeats);
 
         if (isSelected) {
-          newSelection.remove(seatId); // Unselect
+          newSelection.remove(seatId);
         } else {
           // Select (Cek Kuota)
           if (newSelection.length < widget.passengerCount) {
@@ -152,9 +150,9 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
         ),
         child: Center(
           child: isOccupied 
-            ? Icon(Icons.close, color: Colors.white70, size: 20) // Tanda Silang jika terisi
+            ? Icon(Icons.close, color: Colors.white70, size: 20) 
             : Text(
-                _getSeatLetter(index), // Tampilkan A/B/C/D (Opsional)
+                _getSeatLetter(index), // Huruf Kursi
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.grey[600], 
                   fontWeight: FontWeight.bold
@@ -165,7 +163,7 @@ class _SeatMapWidgetState extends State<SeatMapWidget> {
     );
   }
 
-  // Helper Huruf (A, B, C, D)
+  // (A, B, C, D)
   String _getSeatLetter(int index) {
     int mod = index % 4;
     if (mod == 0) return "A";

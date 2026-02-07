@@ -43,7 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Registrasi Berhasil! Silakan Login."), backgroundColor: Colors.green),
       );
-      Navigator.pop(context); // Kembali ke halaman Login
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Gagal: ${response['message']}"), backgroundColor: Colors.red),
@@ -54,16 +54,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBackgroundColor, // Warna abu muda
+      backgroundColor: kBackgroundColor, 
       appBar: AppBar(
         title: Text("Daftar Akun Baru"),
-        backgroundColor: kPrimaryColor, // Biru KAI
+        backgroundColor: kPrimaryColor, 
         elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header Dekorasi
+            // Header
             Container(
               height: 100,
               decoration: BoxDecoration(
@@ -142,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: kSecondaryColor, // Oranye
+                          backgroundColor: kSecondaryColor, 
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _submitRegister,
@@ -163,7 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Widget Helper untuk membuat Input Field lebih rapi
+  // Widget Helper untuk membuat Input Field
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,

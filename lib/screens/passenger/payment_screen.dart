@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/booking_provider.dart';
 import '../../constants.dart';
-import 'home_screen.dart'; // Pastikan import Home Screen benar
+import 'home_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   final int idPembelian;
@@ -28,7 +28,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   void _payNow() async {
     setState(() => _isProcessing = true);
-    await Future.delayed(Duration(seconds: 2)); // Delay palsu
+    await Future.delayed(Duration(seconds: 2)); // Delay simulasi
 
     bool success = await Provider.of<BookingProvider>(context, listen: false)
         .processPayment(widget.idPembelian, _selectedMethod);
@@ -60,7 +60,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
               onPressed: () {
-                // PINDAH KE HOME TAB 1 (TIKET/HISTORY)
+                // PINDAH KE HOME SCREEN DAN BUKA TAB RIWAYAT
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => PassengerHomeScreen(initialIndex: 1)),
@@ -76,7 +76,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _payLater() {
-    // LANGSUNG KE HISTORY (Status masih pending)
+    // Status masih pending
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => PassengerHomeScreen(initialIndex: 1)),
@@ -102,7 +102,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ))
         : Column(
             children: [
-              // HEADER TOTAL
+              // HEADER 
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(20),
@@ -147,7 +147,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
               ),
 
-              // TOMBOL AKSI
+              // TOMBOL
               Container(
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0,-5))]),

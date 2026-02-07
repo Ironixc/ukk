@@ -68,7 +68,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   leading: Icon(Icons.train, color: kPrimaryColor),
                   title: Text(stations[i]),
                   onTap: () {
-                    // --- LOGIC BARU: CEGAH STASIUN SAMA (AUTO SWAP) ---
+                    // --- LOGIC : CEGAH STASIUN SAMA (AUTO SWAP) ---
                     setState(() {
                       String selected = stations[i];
                       

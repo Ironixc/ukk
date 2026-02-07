@@ -40,7 +40,7 @@ class AuthProvider with ChangeNotifier {
           'password': password,
           'nik': nik,
           'nama_penumpang':
-              namaPenumpang, // KUNCI: Harus 'nama_penumpang' sesuai PHP
+              namaPenumpang,
           'alamat': alamat,
           'telp': telp,
         },
@@ -79,14 +79,14 @@ class AuthProvider with ChangeNotifier {
       final response = await http.post(
         url,
         body: {
-          'username': identifier, // Pastikan ini 'username'
+          'username': identifier, 
           'password': password,
         },
       );
 
       // 2. Cek Apa Balasan Server
       print("Status Code: ${response.statusCode}");
-      print("Respon Server: ${response.body}"); // <--- INI PALING PENTING
+      print("Respon Server: ${response.body}"); 
       print("------------------------------------------------");
 
       final data = json.decode(response.body);
@@ -104,7 +104,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      print("ERROR KONEKSI: $e"); // <--- Cek jika ada error internet
+      print("ERROR KONEKSI: $e"); 
       _isLoading = false;
       notifyListeners();
       return false;

@@ -4,7 +4,7 @@ import 'package:ukk/providers/admin_provider.dart';
 import 'package:ukk/providers/booking_provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
-import 'providers/history_provider.dart'; // <--- JANGAN LUPA IMPORT INI
+import 'providers/history_provider.dart';
 
 void main() {
   runApp(MyApp());
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => AdminProvider()), // Tambahkan ini
+        ChangeNotifierProvider(create: (_) => AdminProvider()), 
         ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
       ],
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primaryColor: Color(0xFF2D3E50),
-          fontFamily: 'GoogleFonts.poppins().fontFamily', // Gunakan font modern
+          fontFamily: 'GoogleFonts.poppins().fontFamily',
         ),
         home: LoginScreen(),
       ),

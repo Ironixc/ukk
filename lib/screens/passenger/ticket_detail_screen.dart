@@ -49,7 +49,7 @@ class TicketDetailScreen extends StatelessWidget {
               pw.Text(data['id_pembelian'].toString(), style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.orange800)),
               pw.SizedBox(height: 20),
 
-              // --- BAGIAN BARU: DETAIL PERJALANAN (TANGGAL & RUTE) ---
+              // --- BAGIAN : DETAIL PERJALANAN (TANGGAL & RUTE) ---
               pw.Container(
                 padding: pw.EdgeInsets.all(10),
                 decoration: pw.BoxDecoration(
@@ -80,7 +80,6 @@ class TicketDetailScreen extends StatelessWidget {
                             pw.Text(data['asal_keberangkatan']),
                           ]
                         ),
-                        // PANAH
                         pw.Padding(
                           padding: pw.EdgeInsets.symmetric(horizontal: 20),
                           child: pw.Icon(pw.IconData(0xe5c8), color: PdfColors.grey, size: 20),
@@ -183,7 +182,7 @@ class TicketDetailScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // HEADER KODE BOOKING
+                  // HEADER
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(vertical: 20),
@@ -203,7 +202,7 @@ class TicketDetailScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // BODY TIKET
+                  //  TIKET
                   Padding(
                     padding: EdgeInsets.all(24),
                     child: Column(
@@ -239,7 +238,7 @@ class TicketDetailScreen extends StatelessWidget {
                         ),
                         Divider(height: 30),
 
-                        // DAFTAR PENUMPANG (LEBIH JELAS)
+                        // DAFTAR PENUMPANG
                         Align(alignment: Alignment.centerLeft, child: Text("Daftar Penumpang", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey))),
                         SizedBox(height: 10),
                         

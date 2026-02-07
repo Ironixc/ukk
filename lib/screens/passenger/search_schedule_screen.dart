@@ -9,13 +9,12 @@ class SearchScheduleScreen extends StatefulWidget {
   final String asal;
   final String tujuan;
   final String tanggal; 
-  final int passengerCount; // <-- TERIMA DATA DISINI
-
+  final int passengerCount; 
   SearchScheduleScreen({
     required this.asal,
     required this.tujuan,
     required this.tanggal,
-    required this.passengerCount, // Wajib diisi
+    required this.passengerCount, 
   });
 
   @override
@@ -90,7 +89,7 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
       ),
       body: Column(
         children: [
-          // KALENDER GESER
+          // KALENDER 
           Container(
             height: 80,
             color: kPrimaryColor,
@@ -161,7 +160,7 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
           Navigator.push(context, MaterialPageRoute(
             builder: (_) => BookingScreen(
               jadwal: item,
-              passengerCount: widget.passengerCount // <-- TERUSKAN DATA KE BOOKING SCREEN
+              passengerCount: widget.passengerCount
             )
           ));
         },

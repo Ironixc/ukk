@@ -3,7 +3,6 @@ class UserModel {
   String? username;
   String? role;
   int? idPelanggan;
-  // Tambahan data profil
   String? nik;
   String? namaLengkap;
 

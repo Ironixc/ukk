@@ -18,7 +18,7 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
     admin.getKereta(); // Fetch trains to populate the dropdown
   }
 
-  // EXACT LIST FROM HOME SCREEN (Do not change this)
+  //LIST FROM HOME SCREEN
   final List<String> stations = ["Gambir", "Bandung", "Surabaya Gubeng", "Malang", "Yogyakarta", "Solo Balapan", "Semarang Tawang"];
 
   void _showAddDialog() {
