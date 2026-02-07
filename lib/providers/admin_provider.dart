@@ -5,14 +5,21 @@ import '../constants.dart';
 
 class AdminProvider with ChangeNotifier {
   bool _isLoading = false;
+  
+  // VARIABLE DATA
   List<dynamic> _listKereta = [];
+  List<dynamic> _listJadwal = []; // Ganti nama biar konsisten
 
+  // GETTERS
   bool get isLoading => _isLoading;
   List<dynamic> get listKereta => _listKereta;
+  List<dynamic> get listJadwal => _listJadwal;
 
-  // --------------------------------------------------------
-  // 1. FETCH DATA (GET)
-  // --------------------------------------------------------
+  // ===========================================================================
+  // BAGIAN 1: MANAJEMEN KERETA (CRUD)
+  // ===========================================================================
+  
+  // 1. GET KERETA
   Future<void> getKereta() async {
     _isLoading = true;
     notifyListeners();
@@ -32,11 +39,7 @@ class AdminProvider with ChangeNotifier {
     notifyListeners();
   }
 
-// ... imports ...
-
-  // 1. FETCH DATA (Sudah OK, tidak perlu ubah)
-
-  // 2. TAMBAH DATA (POST) - UPDATE PARAMETER
+  // 2. ADD KERETA
   Future<bool> addKereta(String nama, String deskripsi, String kelas, String jumlahGerbong, String kuota) async {
     try {
       final response = await http.post(
@@ -45,8 +48,8 @@ class AdminProvider with ChangeNotifier {
           'nama_kereta': nama,
           'deskripsi': deskripsi,
           'kelas': kelas,
-          'jumlah_gerbong': jumlahGerbong, // Parameter Baru
-          'kuota': kuota, // Parameter Baru
+          'jumlah_gerbong': jumlahGerbong,
+          'kuota': kuota,
         },
       );
       
@@ -61,7 +64,7 @@ class AdminProvider with ChangeNotifier {
     }
   }
 
-  // 3. EDIT DATA (PUT) - UPDATE PARAMETER
+  // 3. UPDATE KERETA
   Future<bool> updateKereta(String id, String nama, String deskripsi, String kelas, String jumlahGerbong) async {
     try {
       final response = await http.put(
@@ -71,7 +74,7 @@ class AdminProvider with ChangeNotifier {
           'nama_kereta': nama,
           'deskripsi': deskripsi,
           'kelas': kelas,
-          'jumlah_gerbong': jumlahGerbong, // Parameter Baru (Target Jumlah)
+          'jumlah_gerbong': jumlahGerbong,
         }),
       );
 
@@ -82,49 +85,55 @@ class AdminProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print("Error Update: $e");
       return false;
     }
   }
 
-  // --------------------------------------------------------
-  // 4. HAPUS DATA (DELETE)
-  // --------------------------------------------------------
+  // 4. DELETE KERETA
   Future<String> deleteKereta(String id) async {
     try {
       final response = await http.delete(Uri.parse('$baseUrl/kereta.php?id=$id'));
       final data = json.decode(response.body);
 
       if (data['status'] == 'success') {
-        _listKereta.removeWhere((item) => item['id'] == id); // Hapus dari UI langsung biar cepat
+        _listKereta.removeWhere((item) => item['id'] == id);
         notifyListeners();
         return "success";
       } else {
-        return data['message']; // Kembalikan pesan error (misal: Foreign Key constraint)
+        return data['message'];
       }
     } catch (e) {
       return "Terjadi kesalahan koneksi";
     }
   }
 
-  // ... (kode kereta sebelumnya) ...
 
-  List<dynamic> _listJadwal = [];
-  List<dynamic> get listJadwal => _listJadwal;
+  // ===========================================================================
+  // BAGIAN 2: MANAJEMEN JADWAL (CRUD)
+  // ===========================================================================
 
-  // 1. GET JADWAL
+  // 1. GET JADWAL (ADMIN VERSION - NO PARAMS)
+  // Admin mengambil SEMUA jadwal, tidak perlu parameter filter seperti user
   Future<void> getJadwal() async {
     _isLoading = true;
     notifyListeners();
+
     try {
-      final response = await http.get(Uri.parse('$baseUrl/jadwal.php'));
+      // Panggil URL tanpa parameter search agar PHP mengembalikan semua data
+      final url = Uri.parse('$baseUrl/jadwal.php'); 
+      final response = await http.get(url);
       final data = json.decode(response.body);
+
       if (data['status'] == 'success') {
-        _listJadwal = data['data'];
+        _listJadwal = data['data']; // Simpan ke variable _listJadwal
+      } else {
+        _listJadwal = [];
       }
     } catch (e) {
-      print("Error Get Jadwal: $e");
+      print("Error Get Jadwal Admin: $e");
+      _listJadwal = [];
     }
+
     _isLoading = false;
     notifyListeners();
   }
@@ -134,11 +143,12 @@ class AdminProvider with ChangeNotifier {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/jadwal.php'),
-        body: body, // Kita kirim map langsung biar ringkas
+        body: body, 
       );
       final data = json.decode(response.body);
+      
       if (data['status'] == 'success') {
-        await getJadwal();
+        await getJadwal(); // Refresh list (sekarang valid karena tanpa param)
         return true;
       }
       return false;
@@ -156,8 +166,9 @@ class AdminProvider with ChangeNotifier {
         body: json.encode(body),
       );
       final data = json.decode(response.body);
+
       if (data['status'] == 'success') {
-        await getJadwal();
+        await getJadwal(); // Refresh list
         return true;
       }
       return false;
@@ -171,8 +182,9 @@ class AdminProvider with ChangeNotifier {
     try {
       final response = await http.delete(Uri.parse('$baseUrl/jadwal.php?id=$id'));
       final data = json.decode(response.body);
+      
       if (data['status'] == 'success') {
-        _listJadwal.removeWhere((item) => item['id'] == id);
+        _listJadwal.removeWhere((item) => item['id'] == id); // Variable sudah benar
         notifyListeners();
         return "success";
       }

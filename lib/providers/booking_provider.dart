@@ -7,15 +7,50 @@ class BookingProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // 1. Ambil List Gerbong berdasarkan ID Kereta
+  // ==========================================================
+  // 1. BAGIAN PENCARIAN JADWAL (YANG HILANG TADI)
+  // ==========================================================
+  List<dynamic> _jadwal = []; 
+  List<dynamic> get jadwal => _jadwal; // <-- Ini Getter yang dicari oleh error 'undefined_getter'
+
+  // Fungsi ini yang dicari oleh error 'undefined_method'
+  Future<void> getJadwal(String asal, String tujuan, String tanggal) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Pastikan file jadwal.php Anda menangani parameter tanggal
+      final url = Uri.parse('$baseUrl/jadwal.php?asal=$asal&tujuan=$tujuan&tanggal=$tanggal');
+      
+      final response = await http.get(url);
+      final data = json.decode(response.body);
+
+      if (data['status'] == 'success') {
+        _jadwal = data['data'];
+      } else {
+        _jadwal = [];
+      }
+    } catch (e) {
+      print("Error Get Jadwal: $e");
+      _jadwal = [];
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // ==========================================================
+  // 2. BAGIAN GERBONG & KURSI (KODE LAMA ANDA)
+  // ==========================================================
+  
+  // Ambil List Gerbong
   Future<List<dynamic>> getGerbong(String idKereta) async {
     try {
-      // Pastikan di PHP Anda ada logika: if (isset($_GET['id_kereta'])) ...
       final response = await http.get(Uri.parse('$baseUrl/gerbong.php?id_kereta=$idKereta'));
       final data = json.decode(response.body);
       
       if (data['status'] == 'success') {
-        return data['data']; // Mengembalikan List Gerbong
+        return data['data']; 
       } else {
         return [];
       }
@@ -25,12 +60,10 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-// 2. Ambil List Kursi (UPDATE: Tambah parameter idJadwal)
+  // Ambil List Kursi
   Future<List<dynamic>> getKursi(String idGerbong, String idJadwal) async {
     try {
-      // Kirim id_jadwal ke PHP agar bisa difilter
       final url = Uri.parse('$baseUrl/kursi.php?id_gerbong=$idGerbong&id_jadwal=$idJadwal');
-      
       final response = await http.get(url);
       final data = json.decode(response.body);
       
@@ -45,7 +78,11 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // 3. Kirim Pesanan (Booking)
+  // ==========================================================
+  // 3. BAGIAN TRANSAKSI (BOOKING & PAYMENT)
+  // ==========================================================
+  
+  // Kirim Pesanan
   Future<Map<String, dynamic>> orderTiket({
     required int idPelanggan,
     required String idJadwal,
@@ -77,6 +114,8 @@ class BookingProvider with ChangeNotifier {
       return {'status': 'error', 'message': e.toString()};
     }
   }
+
+  // Proses Pembayaran
   Future<bool> processPayment(int idPembelian, String metode) async {
     _isLoading = true;
     notifyListeners();
