@@ -28,18 +28,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     _selectedIndex = widget.initialIndex;
   }
 
-  // --- LOGIC BARU: BATASI KALENDER CUMA 1 MINGGU ---
   Future<void> _pickDate() async {
     DateTime now = DateTime.now();
-    // Batas akhir adalah 7 hari dari sekarang
-    DateTime maxDate = now.add(Duration(days: 6)); 
+    DateTime maxDate = now.add(Duration(days: 7)); 
 
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _tanggalBerangkat,
-      // User tidak bisa pilih tanggal kemarin
       firstDate: now, 
-      // User tidak bisa pilih lebih dari 1 minggu ke depan
       lastDate: maxDate, 
       builder: (context, child) {
         return Theme(
@@ -72,8 +68,29 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   leading: Icon(Icons.train, color: kPrimaryColor),
                   title: Text(stations[i]),
                   onTap: () {
+                    // --- LOGIC BARU: CEGAH STASIUN SAMA (AUTO SWAP) ---
                     setState(() {
-                      isAsal ? _stasiunAsal = stations[i] : _stasiunTujuan = stations[i];
+                      String selected = stations[i];
+                      
+                      if (isAsal) {
+                        // Jika kita mengubah ASAL
+                        if (selected == _stasiunTujuan) {
+                          // Jika Asal baru == Tujuan sekarang, maka TUKAR posisi
+                          _stasiunTujuan = _stasiunAsal; // Tujuan mengambil Asal yg lama
+                          _stasiunAsal = selected;       // Asal mengambil yang baru
+                        } else {
+                          _stasiunAsal = selected;
+                        }
+                      } else {
+                        // Jika kita mengubah TUJUAN
+                        if (selected == _stasiunAsal) {
+                          // Jika Tujuan baru == Asal sekarang, maka TUKAR posisi
+                          _stasiunAsal = _stasiunTujuan; // Asal mengambil Tujuan yg lama
+                          _stasiunTujuan = selected;     // Tujuan mengambil yang baru
+                        } else {
+                          _stasiunTujuan = selected;
+                        }
+                      }
                     });
                     Navigator.pop(ctx);
                   },
@@ -359,10 +376,17 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                 elevation: 5,
                               ),
                               onPressed: () {
+                                // 1. Validasi Stasiun Kosong
                                 if (_stasiunAsal.contains("Pilih") || _stasiunTujuan.contains("Pilih")) {
                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Pilih stasiun dulu!")));
                                   return;
                                 }
+                                // 2. Validasi Stasiun Sama (Extra Safety)
+                                if (_stasiunAsal == _stasiunTujuan) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Asal dan Tujuan tidak boleh sama!")));
+                                  return;
+                                }
+
                                 Navigator.push(context, MaterialPageRoute(
                                   builder: (_) => SearchScheduleScreen(
                                     asal: _stasiunAsal,

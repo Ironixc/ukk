@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Ke Dashboard Petugas
           Navigator.pushReplacement(
             context, 
-            MaterialPageRoute(builder: (_) => AdminDashboard())
+            MaterialPageRoute(builder: (_) => DashboardScreen())
           );
         } else {
           // Ke Home Penumpang

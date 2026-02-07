@@ -1,140 +1,103 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:ukk/screens/admin/manage_jadwal_screen.dart';
-import '../../providers/auth_provider.dart';
 import '../../constants.dart';
-import 'manage_kereta_screen.dart'; // Kita buat setelah ini
+import '../../providers/auth_provider.dart';
+import 'manage_kereta_screen.dart'; // Import separate file
+import 'manage_jadwal_screen.dart'; // Import separate file
 
-class AdminDashboard extends StatelessWidget {
-  const AdminDashboard({super.key});
-
+class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var auth = Provider.of<AuthProvider>(context);
-    String namaPetugas = auth.currentUser?.username ?? "Petugas";
+    final user = Provider.of<AuthProvider>(context).currentUser;
 
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA), // Very light grey (Google style)
       appBar: AppBar(
-        title: Text("Dashboard Admin"),
-        backgroundColor: kPrimaryColor,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text("Admin Console", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: Icon(Icons.exit_to_app),
+            icon: Icon(Icons.logout, color: Colors.grey[700]),
             onPressed: () {
-              // Logout Logic
-              Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              ).logout(); // Buat fungsi logout di AuthProvider nanti
-              Navigator.of(context).pushReplacementNamed('/'); // Balik ke Login
+              Provider.of<AuthProvider>(context, listen: false).logout();
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
             },
-          ),
+          )
         ],
       ),
-      body: Column(
-        children: [
-          // Header Info
-          Container(
-            padding: EdgeInsets.all(20),
-            color: kPrimaryColor,
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Halo, $namaPetugas",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  "Kelola sistem tiket dari sini",
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Welcome back,", style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+            Text("${user?.namaLengkap ?? 'Administrator'}", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF202124))),
+            SizedBox(height: 30),
 
-          // Grid Menu
-          Expanded(
-            child: GridView.count(
-              padding: EdgeInsets.all(20),
+            // GRID MENU (Only 2 Items)
+            GridView.count(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              childAspectRatio: 1.0,
               children: [
-                _buildMenu(
+                _buildAdminCard(
                   context,
-                  "Data Kereta",
-                  Icons.train,
-                  Colors.blue,
-                  ManageKeretaScreen(),
+                  title: "Data Kereta",
+                  subtitle: "Manage Trains",
+                  icon: Icons.train_outlined,
+                  color: Colors.blueAccent,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ManageKeretaScreen())),
                 ),
-                _buildMenu(
+                _buildAdminCard(
                   context,
-                  "Data Gerbong",
-                  Icons.chair_alt,
-                  Colors.orange,
-                  null,
-                ), // Nanti dibuat
-                _buildMenu(
-                  context,
-                  "Jadwal",
-                  Icons.calendar_today,
-                  Colors.green,
-                  ManageJadwalScreen(),
+                  title: "Jadwal",
+                  subtitle: "Manage Schedules",
+                  icon: Icons.calendar_month_outlined,
+                  color: Colors.orangeAccent,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ManageJadwalScreen())),
                 ),
-                _buildMenu(
-                  context,
-                  "Laporan",
-                  Icons.analytics,
-                  Colors.purple,
-                  null,
-                ), // Nanti dibuat
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMenu(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Color color,
-    Widget? page,
-  ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(15),
-        onTap: () {
-          if (page != null) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-          } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text("Fitur belum tersedia")));
-          }
-        },
+  Widget _buildAdminCard(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: Offset(0, 5))
+          ]
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: color.withOpacity(0.1),
-              child: Icon(icon, size: 30, color: color),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 32),
             ),
-            SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF202124))),
+                SizedBox(height: 4),
+                Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              ],
+            )
           ],
         ),
       ),

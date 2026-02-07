@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/admin_provider.dart';
 import '../../constants.dart';
+import '../../providers/admin_provider.dart';
 
 class ManageKeretaScreen extends StatefulWidget {
-  const ManageKeretaScreen({super.key});
-
   @override
   _ManageKeretaScreenState createState() => _ManageKeretaScreenState();
 }
@@ -14,348 +12,99 @@ class _ManageKeretaScreenState extends State<ManageKeretaScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data otomatis saat halaman dibuka
-    Future.microtask(() => 
-      Provider.of<AdminProvider>(context, listen: false).getKereta()
-    );
+    Future.microtask(() => Provider.of<AdminProvider>(context, listen: false).getKereta());
   }
 
-  // ---------------------------------------------------------------------------
-  // LOGIKA UTAMA FORM DIALOG (TAMBAH / EDIT)
-  // ---------------------------------------------------------------------------
-  void _showFormDialog({Map? item}) {
-    // Controller Text Input
-    final nameController = TextEditingController(text: item != null ? item['nama_kereta'] : '');
-    final descController = TextEditingController(text: item != null ? item['deskripsi'] : '');
-    
-    // Controller Gerbong & Kuota
-    // Ambil data jumlah gerbong aktif jika ada, default 1
-    final gerbongController = TextEditingController(
-      text: item != null && item['jumlah_gerbong_aktif'] != null 
-          ? item['jumlah_gerbong_aktif'].toString() 
-          : '1'
-    );
-    final kuotaController = TextEditingController(text: '50'); // Default 50 kursi
-
-    // --- LOGIC PERBAIKAN DROPDOWN (CASE INSENSITIVE) ---
-    List<String> opsiKelas = ['Ekonomi', 'Bisnis', 'Eksekutif'];
-    String selectedKelas = 'Ekonomi'; // Default aman
-
-    if (item != null && item['kelas'] != null) {
-      String dbKelas = item['kelas'].toString();
-      try {
-        // Cari yg cocok (abaikan huruf besar/kecil). 
-        // Misal DB "ekonomi" -> Ketemu "Ekonomi" di list -> Pakai "Ekonomi"
-        selectedKelas = opsiKelas.firstWhere(
-          (opsi) => opsi.toLowerCase() == dbKelas.toLowerCase(),
-          orElse: () => 'Ekonomi', // Jika data aneh, balik ke Ekonomi
-        );
-      } catch (e) {
-        selectedKelas = 'Ekonomi';
-      }
-    }
-    // ---------------------------------------------------
+  void _showAddDialog() {
+    final _nama = TextEditingController();
+    final _gerbong = TextEditingController();
+    final _kuota = TextEditingController();
+    String _kelas = "Eksekutif";
 
     showDialog(
       context: context,
-      builder: (ctx) {
-        // Kita pakai StatefulBuilder AGAR Dropdown bisa berubah tampilan saat diklik
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: Text(item == null ? "Tambah Kereta Baru" : "Edit Kereta"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Input Nama
-                    TextField(
-                      controller: nameController, 
-                      decoration: InputDecoration(
-                        labelText: "Nama Kereta", 
-                        hintText: "Cth: Argo Wilis",
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5)
-                      )
-                    ),
-                    SizedBox(height: 10),
-                    
-                    // Input Deskripsi
-                    TextField(
-                      controller: descController, 
-                      decoration: InputDecoration(
-                        labelText: "Deskripsi / Rute",
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5)
-                      )
-                    ),
-                    SizedBox(height: 10),
-                    
-                    // Input Dropdown Kelas (FIXED)
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedKelas,
-                      decoration: InputDecoration(
-                        labelText: "Kelas Kereta",
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5)
-                      ),
-                      items: opsiKelas.map((String val) {
-                        return DropdownMenuItem(value: val, child: Text(val));
-                      }).toList(),
-                      onChanged: (val) {
-                        setStateDialog(() { // Update tampilan dialog lokal
-                          selectedKelas = val!;
-                        });
-                      },
-                    ),
-                    
-                    SizedBox(height: 20),
-                    Divider(thickness: 2),
-                    Text("Konfigurasi Gerbong Otomatis", 
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kPrimaryColor)),
-                    SizedBox(height: 10),
-
-                    Row(
-                      children: [
-                        // Input Jumlah Gerbong
-                        Expanded(
-                          child: TextField(
-                            controller: gerbongController, 
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: "Jml Gerbong", 
-                              helperText: "Total Gerbong",
-                              border: OutlineInputBorder()
-                            )
-                          ),
-                        ),
-                        SizedBox(width: 15),
-                        
-                        // Input Kuota (Hanya muncul saat Tambah Baru)
-                        // Agar logic Edit tidak terlalu rumit merubah struktur kursi lama
-                        item == null ? Expanded(
-                          child: TextField(
-                            controller: kuotaController, 
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: "Kursi", 
-                              helperText: "Per Gerbong",
-                              border: OutlineInputBorder()
-                            )
-                          ),
-                        ) : Container(),
-                      ],
-                    ),
-                    
-                    if (item != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10.0),
-                        child: Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(5),
-                            border: Border.all(color: Colors.orange)
-                          ),
-                          child: Text(
-                            "Perhatian: Mengurangi jumlah gerbong akan menghapus gerbong nomor terakhir beserta kursinya secara permanen.",
-                            style: TextStyle(color: Colors.orange[800], fontSize: 11),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text("Add New Train"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: _nama, decoration: InputDecoration(labelText: "Train Name (e.g. Argo Bromo)", border: OutlineInputBorder())),
+              SizedBox(height: 10),
+              DropdownButtonFormField(
+                value: _kelas,
+                items: ["Eksekutif", "Bisnis", "Ekonomi"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                onChanged: (v) => _kelas = v.toString(),
+                decoration: InputDecoration(labelText: "Class", border: OutlineInputBorder()),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx), 
-                  child: Text("Batal", style: TextStyle(color: Colors.grey))
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
-                  onPressed: () async {
-                    // Validasi Sederhana
-                    if (nameController.text.isEmpty || gerbongController.text.isEmpty) {
-                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Nama & Jumlah Gerbong wajib diisi")));
-                       return;
-                    }
-
-                    Navigator.pop(ctx); // Tutup dialog
-
-                    // Tampilkan Loading
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Sedang memproses..."), duration: Duration(seconds: 1)));
-
-                    bool success;
-                    final provider = Provider.of<AdminProvider>(context, listen: false);
-
-                    if (item == null) {
-                      // Mode Tambah
-                      success = await provider.addKereta(
-                        nameController.text, 
-                        descController.text, 
-                        selectedKelas,
-                        gerbongController.text,
-                        kuotaController.text
-                      );
-                    } else {
-                      // Mode Edit
-                      success = await provider.updateKereta(
-                        item['id'], 
-                        nameController.text, 
-                        descController.text, 
-                        selectedKelas,
-                        gerbongController.text
-                      );
-                    }
-
-                    // Feedback
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(success ? "Berhasil disimpan!" : "Gagal menyimpan data"), 
-                          backgroundColor: success ? Colors.green : Colors.red
-                        )
-                      );
-                    }
-                  },
-                  child: Text("Simpan & Proses"),
-                ),
-              ],
-            );
-          }
-        );
-      },
+              SizedBox(height: 10),
+              TextField(controller: _gerbong, decoration: InputDecoration(labelText: "Total Carriages", border: OutlineInputBorder()), keyboardType: TextInputType.number),
+              SizedBox(height: 10),
+              TextField(controller: _kuota, decoration: InputDecoration(labelText: "Seats per Carriage", border: OutlineInputBorder()), keyboardType: TextInputType.number),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
+            onPressed: () async {
+              if (_nama.text.isEmpty || _gerbong.text.isEmpty) return;
+              await Provider.of<AdminProvider>(context, listen: false)
+                  .addKereta(_nama.text, "Standard Description", _kelas, _gerbong.text, _kuota.text);
+              Navigator.pop(ctx);
+            }, 
+            child: Text("Save")
+          )
+        ],
+      )
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // TAMPILAN UTAMA (LIST KERETA)
-  // ---------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text("Kelola Data Kereta"), 
-        backgroundColor: kPrimaryColor,
-        elevation: 0,
+        title: Text("Manage Trains", style: TextStyle(color: Colors.black87)), 
+        backgroundColor: Colors.white, 
+        elevation: 1,
+        iconTheme: IconThemeData(color: Colors.black87),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: kSecondaryColor,
+        onPressed: _showAddDialog,
+        backgroundColor: Colors.blueAccent,
         icon: Icon(Icons.add),
-        label: Text("Tambah Kereta"),
-        onPressed: () => _showFormDialog(), // Buka form tambah
+        label: Text("Add Train"),
       ),
       body: Consumer<AdminProvider>(
-        builder: (context, provider, child) {
-          // 1. Loading State
-          if (provider.isLoading) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          // 2. Empty State
-          if (provider.listKereta.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.train_outlined, size: 80, color: Colors.grey[300]),
-                  SizedBox(height: 10),
-                  Text("Belum ada data kereta.", style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            );
-          }
-
-          // 3. List Data State
-          return RefreshIndicator(
-            onRefresh: () => provider.getKereta(),
-            child: ListView.builder(
-              padding: EdgeInsets.only(bottom: 80), // Biar gak ketutup FAB
-              itemCount: provider.listKereta.length,
-              itemBuilder: (context, index) {
-                final item = provider.listKereta[index];
-                
-                // Ambil info jumlah gerbong (handle jika null)
-                String infoGerbong = item['jumlah_gerbong_aktif'] != null 
-                    ? "${item['jumlah_gerbong_aktif']} Gerbong" 
-                    : "- Gerbong";
-
-                return Card(
-                  elevation: 2,
-                  margin: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                    leading: CircleAvatar(
-                      radius: 25,
-                      backgroundColor: kPrimaryColor.withOpacity(0.1),
-                      child: Icon(Icons.train, color: kPrimaryColor),
-                    ),
-                    title: Text(
-                      item['nama_kereta'], 
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 4),
-                        // Badge Kelas
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(4)
-                          ),
-                          child: Text(
-                            item['kelas'], 
-                            style: TextStyle(color: Colors.blue[800], fontSize: 12, fontWeight: FontWeight.bold)
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text("$infoGerbong • ${item['deskripsi']}", style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Tombol Edit
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.grey),
-                          onPressed: () => _showFormDialog(item: item),
-                        ),
-                        // Tombol Hapus
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red[300]),
-                          onPressed: () async {
-                            // Konfirmasi Hapus
-                            bool confirm = await showDialog(
-                              context: context, 
-                              builder: (ctx) => AlertDialog(
-                                title: Text("Hapus ${item['nama_kereta']}?"),
-                                content: Text("Data yang dihapus tidak bisa dikembalikan."),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text("Batal")),
-                                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text("Hapus", style: TextStyle(color: Colors.red))),
-                                ],
-                              )
-                            ) ?? false;
-
-                            if (confirm) {
-                              String result = await provider.deleteKereta(item['id']);
-                              if (result != "success") {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result), backgroundColor: Colors.red));
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data dihapus")));
-                              }
-                            }
-                          },
-                        ),
-                      ],
-                    ),
+        builder: (ctx, provider, _) {
+          if (provider.isLoading) return Center(child: CircularProgressIndicator());
+          
+          return ListView.separated(
+            padding: EdgeInsets.all(16),
+            itemCount: provider.listKereta.length,
+            separatorBuilder: (ctx, i) => SizedBox(height: 10),
+            itemBuilder: (ctx, i) {
+              final item = provider.listKereta[i];
+              return Container(
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]),
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue[50], 
+                    child: Text(item['nama_kereta'][0].toUpperCase(), style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold))
                   ),
-                );
-              },
-            ),
+                  title: Text(item['nama_kereta'], style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("${item['kelas']} • ${item['jumlah_gerbong_aktif'] ?? 0} Carriages"),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.red[300]),
+                    onPressed: () => provider.deleteKereta(item['id'].toString()),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
