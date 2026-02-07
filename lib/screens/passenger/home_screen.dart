@@ -15,11 +15,12 @@ class PassengerHomeScreen extends StatefulWidget {
 }
 
 class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
-  // DATA LOGIC (TETAP SAMA)
-  String _stasiunAsal = "Gambir"; // Default value biar cantik
-  String _stasiunTujuan = "Yogyakarta"; // Default value
+  String _stasiunAsal = "Gambir";
+  String _stasiunTujuan = "Yogyakarta";
   DateTime _tanggalBerangkat = DateTime.now();
-  int _passengerCount = 1; // Visual saja
+  
+  // VARIABLE INI SEKARANG BISA DIUBAH
+  int _passengerCount = 1; 
   
   int _selectedIndex = 0;
 
@@ -29,18 +30,24 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     _selectedIndex = widget.initialIndex;
   }
 
-  // LOGIC DATE PICKER (TETAP SAMA)
   Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _tanggalBerangkat,
       firstDate: DateTime.now(),
       lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(primary: kPrimaryColor),
+          ),
+          child: child!,
+        );
+      }
     );
     if (picked != null) setState(() => _tanggalBerangkat = picked);
   }
 
-  // LOGIC STATION PICKER (TETAP SAMA)
   void _showStationPicker(bool isAsal) {
     final stations = ["Gambir", "Bandung", "Surabaya Gubeng", "Malang", "Yogyakarta", "Solo Balapan", "Semarang Tawang"];
     showModalBottomSheet(
@@ -74,7 +81,80 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     );
   }
 
-  // LOGIC SWAP STATION (Tukar Asal & Tujuan)
+  // --- LOGIC BARU: PILIH JUMLAH PENUMPANG ---
+  void _showPassengerSelector() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return StatefulBuilder( // Wajib pakai StatefulBuilder agar angka di modal bisa berubah
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.all(20),
+              height: 250,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Jumlah Penumpang", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Dewasa", style: TextStyle(fontSize: 16)),
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8)
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.remove, color: kPrimaryColor),
+                              onPressed: () {
+                                if (_passengerCount > 1) {
+                                  // Update state Modal
+                                  setModalState(() => _passengerCount--);
+                                  // Update state Halaman Utama
+                                  setState(() {}); 
+                                }
+                              },
+                            ),
+                            Text("$_passengerCount", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            IconButton(
+                              icon: Icon(Icons.add, color: kPrimaryColor),
+                              onPressed: () {
+                                if (_passengerCount < 4) { // Batasi Max 4 orang misal
+                                  setModalState(() => _passengerCount++);
+                                  setState(() {});
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Maksimal 4 penumpang per transaksi")));
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                  Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: kSecondaryColor),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("SIMPAN", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  )
+                ],
+              ),
+            );
+          }
+        );
+      }
+    );
+  }
+
   void _swapStations() {
     setState(() {
       String temp = _stasiunAsal;
@@ -86,9 +166,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Background abu muda
-      
-      // BOTTOM NAVIGATION (TETAP SAMA)
+      backgroundColor: Colors.grey[100],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: kPrimaryColor,
@@ -101,36 +179,31 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
         ],
       ),
-
       body: _getSelectedPage(),
     );
   }
 
   Widget _getSelectedPage() {
     switch (_selectedIndex) {
-      case 0: return _buildHomeContent(); // UI BARU ADA DISINI
+      case 0: return _buildHomeContent();
       case 1: return HistoryScreen();
       case 2: return AccountScreen();
       default: return _buildHomeContent();
     }
   }
 
-  // ===========================================================================
-  // UI BERANDA BARU (MIRIP KAI ACCESS)
-  // ===========================================================================
   Widget _buildHomeContent() {
     return SingleChildScrollView(
       child: Column(
         children: [
           Stack(
             children: [
-              // 1. HEADER BIRU (BACKGROUND)
               Container(
-                height: 280, // Lebih tinggi untuk menampung konten
+                height: 280,
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(20, 60, 20, 0),
                 decoration: BoxDecoration(
-                  color: kPrimaryColor, // Warna Biru KAI
+                  color: kPrimaryColor,
                   borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
                 ),
                 child: Column(
@@ -146,21 +219,15 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                             Text("For Your Easy Access", style: TextStyle(color: Colors.white70, fontSize: 12)),
                           ],
                         ),
-                        Stack(
-                          children: [
-                            Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 28),
-                            Positioned(right: 0, child: CircleAvatar(radius: 4, backgroundColor: Colors.red))
-                          ],
-                        )
+                        Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 28),
                       ],
                     ),
                   ],
                 ),
               ),
 
-              // 2. KARTU PENCARIAN (FLOATING CARD)
               Container(
-                margin: EdgeInsets.fromLTRB(20, 130, 20, 20), // Overlap ke header biru
+                margin: EdgeInsets.fromLTRB(20, 130, 20, 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -168,14 +235,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Tab Bar Palsu (Intercity vs Local)
                     Row(
                       children: [
                         Expanded(child: Container(
                           padding: EdgeInsets.symmetric(vertical: 15),
-                          decoration: BoxDecoration(
-                            border: Border(bottom: BorderSide(color: kSecondaryColor, width: 3))
-                          ),
+                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kSecondaryColor, width: 3))),
                           child: Center(child: Text("Intercity Trains", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold))),
                         )),
                         Expanded(child: Container(
@@ -189,10 +253,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                       padding: EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          // ROW: ASAL <-> TUJUAN
                           Row(
                             children: [
-                              // Asal
                               Expanded(
                                 child: InkWell(
                                   onTap: () => _showStationPicker(true),
@@ -207,8 +269,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                   ),
                                 ),
                               ),
-                              
-                              // Icon Swap
                               InkWell(
                                 onTap: _swapStations,
                                 child: Container(
@@ -217,8 +277,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                   child: Icon(Icons.swap_horiz, color: kPrimaryColor),
                                 ),
                               ),
-                              
-                              // Tujuan
                               Expanded(
                                 child: InkWell(
                                   onTap: () => _showStationPicker(false),
@@ -240,10 +298,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                           Divider(),
                           SizedBox(height: 15),
 
-                          // ROW: TANGGAL & PENUMPANG
                           Row(
                             children: [
-                              // Tanggal
                               Expanded(
                                 flex: 3,
                                 child: InkWell(
@@ -257,33 +313,34 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                         children: [
                                           Icon(Icons.calendar_today, size: 16, color: kSecondaryColor),
                                           SizedBox(width: 8),
-                                          Text(
-                                            DateFormat('EEE, d MMM yyyy').format(_tanggalBerangkat), 
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
-                                          ),
+                                          Text(DateFormat('EEE, d MMM yyyy').format(_tanggalBerangkat), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                         ],
                                       )
                                     ],
                                   ),
                                 ),
                               ),
-                              // Penumpang (Visual Saja)
+                              
+                              // BAGIAN INI SEKARANG BISA DIKLIK
                               Expanded(
                                 flex: 2,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text("Passenger", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                    SizedBox(height: 5),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Icon(Icons.person, size: 16, color: kSecondaryColor),
-                                        SizedBox(width: 5),
-                                        Text("$_passengerCount Adult", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                      ],
-                                    )
-                                  ],
+                                child: InkWell(
+                                  onTap: _showPassengerSelector, // <-- PANGGIL MODAL DISINI
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text("Passenger", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                      SizedBox(height: 5),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Icon(Icons.person, size: 16, color: kSecondaryColor),
+                                          SizedBox(width: 5),
+                                          Text("$_passengerCount Adult", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        ],
+                                      )
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -291,13 +348,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
                           SizedBox(height: 25),
 
-                          // TOMBOL SEARCH (ORANGE)
                           SizedBox(
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: kSecondaryColor, // Warna Orange
+                                backgroundColor: kSecondaryColor,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                                 elevation: 5,
                               ),
@@ -311,6 +367,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                     asal: _stasiunAsal,
                                     tujuan: _stasiunTujuan,
                                     tanggal: DateFormat('yyyy-MM-dd').format(_tanggalBerangkat),
+                                    passengerCount: _passengerCount, // <-- KIRIM DATA JUMLAH PENUMPANG
                                   )
                                 ));
                               },
@@ -325,8 +382,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
               ),
             ],
           ),
-
-          // 3. MENU GRID (DUMMY MENUS DI BAWAH KARTU)
+          
+          // DUMMY MENU
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: GridView.count(
@@ -346,25 +403,19 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
               ],
             ),
           ),
-          
           SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  // Widget Helper untuk Menu Icon
   Widget _buildMenuIcon(IconData icon, String label) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.grey[200]!)
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey[200]!)),
           child: Icon(icon, color: kPrimaryColor, size: 28),
         ),
         SizedBox(height: 8),
