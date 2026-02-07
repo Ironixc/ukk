@@ -18,8 +18,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   String _stasiunAsal = "Gambir";
   String _stasiunTujuan = "Yogyakarta";
   DateTime _tanggalBerangkat = DateTime.now();
-  
-  // VARIABLE INI SEKARANG BISA DIUBAH
   int _passengerCount = 1; 
   
   int _selectedIndex = 0;
@@ -30,12 +28,19 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     _selectedIndex = widget.initialIndex;
   }
 
+  // --- LOGIC BARU: BATASI KALENDER CUMA 1 MINGGU ---
   Future<void> _pickDate() async {
+    DateTime now = DateTime.now();
+    // Batas akhir adalah 7 hari dari sekarang
+    DateTime maxDate = now.add(Duration(days: 6)); 
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _tanggalBerangkat,
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2030),
+      // User tidak bisa pilih tanggal kemarin
+      firstDate: now, 
+      // User tidak bisa pilih lebih dari 1 minggu ke depan
+      lastDate: maxDate, 
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -81,13 +86,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     );
   }
 
-  // --- LOGIC BARU: PILIH JUMLAH PENUMPANG ---
   void _showPassengerSelector() {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
-        return StatefulBuilder( // Wajib pakai StatefulBuilder agar angka di modal bisa berubah
+        return StatefulBuilder( 
           builder: (context, setModalState) {
             return Container(
               padding: EdgeInsets.all(20),
@@ -112,9 +116,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                               icon: Icon(Icons.remove, color: kPrimaryColor),
                               onPressed: () {
                                 if (_passengerCount > 1) {
-                                  // Update state Modal
                                   setModalState(() => _passengerCount--);
-                                  // Update state Halaman Utama
                                   setState(() {}); 
                                 }
                               },
@@ -123,7 +125,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                             IconButton(
                               icon: Icon(Icons.add, color: kPrimaryColor),
                               onPressed: () {
-                                if (_passengerCount < 4) { // Batasi Max 4 orang misal
+                                if (_passengerCount < 4) { 
                                   setModalState(() => _passengerCount++);
                                   setState(() {});
                                 } else {
@@ -321,11 +323,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                 ),
                               ),
                               
-                              // BAGIAN INI SEKARANG BISA DIKLIK
                               Expanded(
                                 flex: 2,
                                 child: InkWell(
-                                  onTap: _showPassengerSelector, // <-- PANGGIL MODAL DISINI
+                                  onTap: _showPassengerSelector, 
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
@@ -367,7 +368,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                     asal: _stasiunAsal,
                                     tujuan: _stasiunTujuan,
                                     tanggal: DateFormat('yyyy-MM-dd').format(_tanggalBerangkat),
-                                    passengerCount: _passengerCount, // <-- KIRIM DATA JUMLAH PENUMPANG
+                                    passengerCount: _passengerCount, 
                                   )
                                 ));
                               },
@@ -383,7 +384,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
             ],
           ),
           
-          // DUMMY MENU
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: GridView.count(

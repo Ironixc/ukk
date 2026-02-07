@@ -274,7 +274,7 @@ class _BookingScreenState extends State<BookingScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text("Pesan Tiket", style: TextStyle(fontWeight: FontWeight.bold)), 
+        title: Text("Pesan Tiket", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), 
         backgroundColor: kPrimaryColor,
         elevation: 0,
       ),

@@ -96,9 +96,9 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
             color: kPrimaryColor,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: 14, 
+              itemCount: 7, 
               itemBuilder: (ctx, i) {
-                DateTime date = DateTime.now().add(Duration(days: i - 2)); 
+                DateTime date = DateTime.now().add(Duration(days: i )); 
                 bool isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month && date.year == _selectedDate.year;
 
                 return GestureDetector(
