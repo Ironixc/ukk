@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ukk/screens/admin/History_admin.dart';
+import 'package:ukk/screens/admin/income.dart';
 import '../../providers/auth_provider.dart';
 import 'manage_kereta_screen.dart';
 import 'manage_jadwal_screen.dart';
@@ -45,7 +47,7 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 _buildAdminCard(
                   context,
-                  title: "Data Kereta",
+                  title: "Trains Data",
                   subtitle: "Manage Trains",
                   icon: Icons.train_outlined,
                   color: Colors.blueAccent,
@@ -53,11 +55,27 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildAdminCard(
                   context,
-                  title: "Jadwal",
+                  title: "Schedules",
                   subtitle: "Manage Schedules",
                   icon: Icons.calendar_month_outlined,
                   color: Colors.orangeAccent,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ManageJadwalScreen())),
+                ),
+                _buildAdminCard(
+                  context,
+                  title: "Tansaction History",
+                  subtitle: "Manage transactions",
+                  icon: Icons.history ,
+                  color: const Color.fromARGB(255, 151, 151, 151),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HistoryAdmin())),
+                ),
+                 _buildAdminCard(
+                  context,
+                  title: "Monthly Income",
+                  subtitle: "Manage monthly income",
+                  icon: Icons.monetization_on,
+                  color:  Colors.green,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => Income())),
                 ),
               ],
             ),

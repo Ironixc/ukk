@@ -15,7 +15,7 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
     super.initState();
     final admin = Provider.of<AdminProvider>(context, listen: false);
     admin.getJadwal();
-    admin.getKereta(); // Fetch trains to populate the dropdown
+    admin.getKereta();
   }
 
   //LIST FROM HOME SCREEN

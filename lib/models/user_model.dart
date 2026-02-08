@@ -16,7 +16,6 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Ambil data dari objek 'profile' jika ada
     var profile = json['profile'];
     
     return UserModel(
@@ -24,9 +23,11 @@ class UserModel {
       username: json['username'],
       role: json['role'],
       idPelanggan: profile != null ? int.tryParse(profile['id'].toString()) : null,
-      // Mapping NIK dan Nama dari Profile
-      nik: profile != null ? profile['nik'] : '',
-      namaLengkap: profile != null ? profile['nama_penumpang'] : '',
+      nik: profile != null ? (profile['nik'] ?? '') : '',
+      // LOGIKA ADAPTASI: Cek nama_petugas (Admin) atau nama_penumpang (Pelanggan)
+      namaLengkap: profile != null 
+          ? (profile['nama_petugas'] ?? profile['nama_penumpang'] ?? 'User') 
+          : 'User',
     );
   }
 }
