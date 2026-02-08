@@ -28,7 +28,6 @@ class BookingProvider with ChangeNotifier {
       if (data['status'] == 'success') {
         List<dynamic> allData = data['data'];
         
-        // Filter on frontend to match origin, destination, and date
         _jadwal = allData.where((item) {
           // Match origin (case insensitive)
           bool matchAsal = item['asal_keberangkatan'].toString().toLowerCase() == asal.toLowerCase();

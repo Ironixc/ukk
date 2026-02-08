@@ -30,7 +30,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   Future<void> _pickDate() async {
     DateTime now = DateTime.now();
-    DateTime maxDate = now.add(Duration(days: 7)); 
+    DateTime maxDate = now.add(Duration(days: 6)); 
 
     final DateTime? picked = await showDatePicker(
       context: context,
