@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
 import '../models/user_model.dart';
+
 class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   UserModel? _currentUser; // Menggunakan Model, bukan variabel terpisah
