@@ -354,7 +354,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                         children: [
                                           Icon(Icons.person, size: 16, color: kSecondaryColor),
                                           SizedBox(width: 5),
-                                          Text("$_passengerCount Adult", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          Text("$_passengerCount", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                         ],
                                       )
                                     ],

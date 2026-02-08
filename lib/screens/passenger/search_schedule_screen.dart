@@ -191,7 +191,7 @@ class _SearchScheduleScreenState extends State<SearchScheduleScreen> {
               Divider(height: 1),
               SizedBox(height: 10),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text("Tersedia", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text("Avi", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
                   Icon(Icons.check_circle_outline, color: Colors.green, size: 16),
               ])
             ],

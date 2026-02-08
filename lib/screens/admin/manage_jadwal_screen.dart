@@ -153,6 +153,143 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
     );
   }
 
+  void _showEditDialog(Map<String, dynamic> item) {
+    String? _selectedKereta = item['id_kereta'].toString();
+    String _asal = item['asal_keberangkatan'];
+    String _tujuan = item['tujuan_keberangkatan'];
+    
+    // Parse existing date and time
+    DateTime _date = DateTime.parse(item['tanggal_berangkat']);
+    TimeOfDay _timeBerangkat = TimeOfDay(hour: _date.hour, minute: _date.minute);
+    
+    DateTime _dateTiba = DateTime.parse(item['tanggal_kedatangan']);
+    TimeOfDay _timeTiba = TimeOfDay(hour: _dateTiba.hour, minute: _dateTiba.minute);
+    
+    final _harga = TextEditingController(text: item['harga'].toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          final keretaList = Provider.of<AdminProvider>(context, listen: false).listKereta;
+          
+          return AlertDialog(
+            title: Text("Edit Schedule"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Train Info", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  DropdownButtonFormField(
+                    value: _selectedKereta,
+                    hint: Text("Select Train"),
+                    isExpanded: true,
+                    items: keretaList.map<DropdownMenuItem<String>>((k) {
+                      return DropdownMenuItem(value: k['id'].toString(), child: Text(k['nama_kereta']));
+                    }).toList(),
+                    onChanged: (v) => setState(() => _selectedKereta = v.toString()),
+                  ),
+                  SizedBox(height: 15),
+
+                  Text("Route", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField(
+                          value: _asal,
+                          isExpanded: true,
+                          decoration: InputDecoration(labelText: "Origin"),
+                          items: stations.map((s) => DropdownMenuItem(value: s, child: Text(s, style: TextStyle(fontSize: 13)))).toList(),
+                          onChanged: (v) => setState(() => _asal = v.toString()),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Icon(Icons.arrow_forward, color: Colors.grey),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: DropdownButtonFormField(
+                          value: _tujuan,
+                          isExpanded: true,
+                          decoration: InputDecoration(labelText: "Destination"),
+                          items: stations.map((s) => DropdownMenuItem(value: s, child: Text(s, style: TextStyle(fontSize: 13)))).toList(),
+                          onChanged: (v) => setState(() => _tujuan = v.toString()),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 15),
+
+                  Text("Date & Time", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text("Date: ${DateFormat('yyyy-MM-dd').format(_date)}"),
+                    trailing: Icon(Icons.calendar_month, color: kPrimaryColor),
+                    onTap: () async {
+                      final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime.now(), lastDate: DateTime(2030));
+                      if (d != null) setState(() => _date = d);
+                    },
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          child: Text("Dep: ${_timeBerangkat.format(context)}"),
+                          onPressed: () async {
+                            final t = await showTimePicker(context: context, initialTime: _timeBerangkat);
+                            if (t != null) setState(() => _timeBerangkat = t);
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          child: Text("Arr: ${_timeTiba.format(context)}"),
+                          onPressed: () async {
+                            final t = await showTimePicker(context: context, initialTime: _timeTiba);
+                            if (t != null) setState(() => _timeTiba = t);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 15),
+                  TextField(controller: _harga, decoration: InputDecoration(labelText: "Price (Rp)", border: OutlineInputBorder()), keyboardType: TextInputType.number),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Cancel")),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
+                onPressed: () async {
+                  if (_selectedKereta == null || _harga.text.isEmpty) return;
+                  
+                  // Format for MySQL (YYYY-MM-DD HH:MM:SS)
+                  String dtBerangkat = "${DateFormat('yyyy-MM-dd').format(_date)} ${_timeBerangkat.hour}:${_timeBerangkat.minute}:00";
+                  String dtTiba = "${DateFormat('yyyy-MM-dd').format(_date)} ${_timeTiba.hour}:${_timeTiba.minute}:00";
+
+                  Map<String, dynamic> payload = {
+                    'id_kereta': _selectedKereta.toString(),
+                    'asal_keberangkatan': _asal,
+                    'tujuan_keberangkatan': _tujuan,
+                    'tanggal_berangkat': dtBerangkat,
+                    'tanggal_kedatangan': dtTiba,
+                    'harga': _harga.text
+                  };
+
+                  await Provider.of<AdminProvider>(context, listen: false).updateJadwal(item['id'].toString(), payload);
+                  Navigator.pop(ctx);
+                }, 
+                child: Text("Update Schedule")
+              )
+            ],
+          );
+        }
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,14 +353,34 @@ class _ManageJadwalScreenState extends State<ManageJadwalScreen> {
                         ],
                       ),
                       SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () => provider.deleteJadwal(item['id'].toString()),
-                          icon: Icon(Icons.delete, size: 16, color: Colors.red),
-                          label: Text("Remove", style: TextStyle(color: Colors.red)),
-                          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size(50, 30)),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _showEditDialog(item),
+                            icon: Icon(Icons.edit, size: 16, color: Colors.blue),
+                            label: Text("Edit", style: TextStyle(color: Colors.blue)),
+                            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size(50, 30)),
+                          ),
+                          SizedBox(width: 10),
+                          TextButton.icon(
+                            onPressed: () async {
+                              final result = await provider.deleteJadwal(item['id'].toString());
+                              if (result != "success") {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(result),
+                                    backgroundColor: Colors.red,
+                                    duration: Duration(seconds: 3),
+                                  )
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.delete, size: 16, color: Colors.red),
+                            label: Text("Remove", style: TextStyle(color: Colors.red)),
+                            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size(50, 30)),
+                          ),
+                        ],
                       )
                     ],
                   ),

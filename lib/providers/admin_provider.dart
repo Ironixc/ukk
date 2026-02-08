@@ -90,23 +90,18 @@ class AdminProvider with ChangeNotifier {
   }
 
   // 4. DELETE KERETA
-  Future<String> deleteKereta(String id) async {
+ Future<String> deleteKereta(String id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/kereta.php?id=$id'));
-      final data = json.decode(response.body);
-
+      final res = await http.delete(Uri.parse('$baseUrl/kereta.php?id=$id'));
+      final data = json.decode(res.body);
       if (data['status'] == 'success') {
-        _listKereta.removeWhere((item) => item['id'] == id);
+        _listKereta.removeWhere((element) => element['id'].toString() == id);
         notifyListeners();
         return "success";
-      } else {
-        return data['message'];
       }
-    } catch (e) {
-      return "Terjadi kesalahan koneksi";
-    }
+      return data['message']; // Mengambil pesan error dari PHP
+    } catch (e) { return "Koneksi Error"; }
   }
-
 
   // ===========================================================================
   // BAGIAN 2: MANAJEMEN JADWAL (CRUD)
@@ -180,17 +175,14 @@ class AdminProvider with ChangeNotifier {
   // 4. DELETE JADWAL
   Future<String> deleteJadwal(String id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/jadwal.php?id=$id'));
-      final data = json.decode(response.body);
-      
+      final res = await http.delete(Uri.parse('$baseUrl/jadwal.php?id=$id'));
+      final data = json.decode(res.body);
       if (data['status'] == 'success') {
-        _listJadwal.removeWhere((item) => item['id'] == id); 
+        _listJadwal.removeWhere((element) => element['id'].toString() == id);
         notifyListeners();
         return "success";
       }
-      return data['message'];
-    } catch (e) {
-      return "Error Koneksi";
-    }
+      return data['message']; // Ambil: 'Jadwal ini tidak bisa dihapus...' dari PHP
+    } catch (e) { return "Koneksi Error"; }
   }
 }

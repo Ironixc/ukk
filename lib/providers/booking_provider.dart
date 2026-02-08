@@ -8,24 +8,53 @@ class BookingProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // ==========================================================
-  // 1. BAGIAN PENCARIAN JADWAL (YANG HILANG TADI)
+  // 1. BAGIAN PENCARIAN JADWAL (DENGAN FILTER FRONTEND)
   // ==========================================================
   List<dynamic> _jadwal = []; 
-  List<dynamic> get jadwal => _jadwal; // <-- Ini Getter yang dicari oleh error 'undefined_getter'
+  List<dynamic> get jadwal => _jadwal;
 
-  // Fungsi ini yang dicari oleh error 'undefined_method'
+  // Fungsi pencarian dengan filter di frontend
   Future<void> getJadwal(String asal, String tujuan, String tanggal) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final url = Uri.parse('$baseUrl/jadwal.php?asal=$asal&tujuan=$tujuan&tanggal=$tanggal');
+      // Get all schedules from backend
+      final url = Uri.parse('$baseUrl/jadwal.php');
       
       final response = await http.get(url);
       final data = json.decode(response.body);
 
       if (data['status'] == 'success') {
-        _jadwal = data['data'];
+        List<dynamic> allData = data['data'];
+        
+        // Filter on frontend to match origin, destination, and date
+        _jadwal = allData.where((item) {
+          // Match origin (case insensitive)
+          bool matchAsal = item['asal_keberangkatan'].toString().toLowerCase() == asal.toLowerCase();
+          
+          // Match destination (case insensitive)
+          bool matchTujuan = item['tujuan_keberangkatan'].toString().toLowerCase() == tujuan.toLowerCase();
+          
+          // Match date (compare only date part, ignore time)
+          bool matchTanggal = true;
+          if (item['tanggal_berangkat'] != null && tanggal.isNotEmpty) {
+            try {
+              DateTime jadwalDate = DateTime.parse(item['tanggal_berangkat']);
+              DateTime searchDate = DateTime.parse(tanggal);
+              matchTanggal = jadwalDate.year == searchDate.year && 
+                            jadwalDate.month == searchDate.month && 
+                            jadwalDate.day == searchDate.day;
+            } catch (e) {
+              print("Date parse error: $e");
+              matchTanggal = false;
+            }
+          }
+          
+          return matchAsal && matchTujuan && matchTanggal;
+        }).toList();
+        
+        print("Found ${_jadwal.length} matching schedules for $asal -> $tujuan on $tanggal");
       } else {
         _jadwal = [];
       }
@@ -123,6 +152,7 @@ class BookingProvider with ChangeNotifier {
       final url = Uri.parse('$baseUrl/payment.php');
       final response = await http.post(
         url,
+        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'id_pembelian': idPembelian,
           'metode_pembayaran': metode,
