@@ -9,11 +9,13 @@ class AdminProvider with ChangeNotifier {
   // VARIABLE DATA
   List<dynamic> _listKereta = [];
   List<dynamic> _listJadwal = [];
+  List<dynamic> _listGerbong = []; // Detail gerbong untuk edit kursi
 
   // GETTERS
   bool get isLoading => _isLoading;
   List<dynamic> get listKereta => _listKereta;
   List<dynamic> get listJadwal => _listJadwal;
+  List<dynamic> get listGerbong => _listGerbong;
 
   // ===========================================================================
   // BAGIAN 1: MANAJEMEN KERETA (CRUD)
@@ -33,6 +35,29 @@ class AdminProvider with ChangeNotifier {
       }
     } catch (e) {
       print("Error Get Kereta: $e");
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // 1B. GET DETAIL GERBONG (Untuk edit kursi)
+  Future<void> getGerbongDetail(String idKereta) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/kereta.php?detail=gerbong&id=$idKereta')
+      );
+      final data = json.decode(response.body);
+
+      if (data['status'] == 'success') {
+        _listGerbong = data['data'];
+      }
+    } catch (e) {
+      print("Error Get Gerbong Detail: $e");
+      _listGerbong = [];
     }
 
     _isLoading = false;
@@ -65,7 +90,7 @@ class AdminProvider with ChangeNotifier {
   }
 
   // 3. UPDATE KERETA
-  Future<bool> updateKereta(String id, String nama, String deskripsi, String kelas, String jumlahGerbong) async {
+  Future<bool> updateKereta(String id, String nama, String deskripsi, String kelas, String jumlahGerbong, String kuota) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/kereta.php?id=$id'),
@@ -75,6 +100,7 @@ class AdminProvider with ChangeNotifier {
           'deskripsi': deskripsi,
           'kelas': kelas,
           'jumlah_gerbong': jumlahGerbong,
+          'kuota': kuota,
         }),
       );
 
@@ -85,12 +111,36 @@ class AdminProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
+      print("Error Update Kereta: $e");
+      return false;
+    }
+  }
+
+  // 3B. UPDATE KURSI DI GERBONG (FITUR BARU)
+  Future<bool> updateSeatsInGerbong(String idGerbong, int newKuota) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/kereta.php?action=update_seats'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'id_gerbong': idGerbong,
+          'new_kuota': newKuota,
+        }),
+      );
+
+      final data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print("Error Update Seats: $e");
       return false;
     }
   }
 
   // 4. DELETE KERETA
- Future<String> deleteKereta(String id) async {
+  Future<String> deleteKereta(String id) async {
     try {
       final res = await http.delete(Uri.parse('$baseUrl/kereta.php?id=$id'));
       final data = json.decode(res.body);
@@ -99,8 +149,10 @@ class AdminProvider with ChangeNotifier {
         notifyListeners();
         return "success";
       }
-      return data['message']; // Mengambil pesan error dari PHP
-    } catch (e) { return "Koneksi Error"; }
+      return data['message'];
+    } catch (e) { 
+      return "Koneksi Error"; 
+    }
   }
 
   // ===========================================================================
@@ -108,13 +160,11 @@ class AdminProvider with ChangeNotifier {
   // ===========================================================================
 
   // 1. GET JADWAL (ADMIN VERSION - NO PARAMS)
-  // Admin mengambil SEMUA jadwal
   Future<void> getJadwal() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // Panggil URL tanpa parameter search agar PHP mengembalikan semua data
       final url = Uri.parse('$baseUrl/jadwal.php'); 
       final response = await http.get(url);
       final data = json.decode(response.body);
@@ -182,7 +232,9 @@ class AdminProvider with ChangeNotifier {
         notifyListeners();
         return "success";
       }
-      return data['message']; // Ambil: 'Jadwal ini tidak bisa dihapus...' dari PHP
-    } catch (e) { return "Koneksi Error"; }
+      return data['message'];
+    } catch (e) { 
+      return "Koneksi Error"; 
+    }
   }
 }

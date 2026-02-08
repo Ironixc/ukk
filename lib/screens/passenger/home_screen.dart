@@ -22,6 +22,16 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   
   int _selectedIndex = 0;
 
+  final List<String> stations = [
+    "Gambir", 
+    "Bandung", 
+    "Surabaya Gubeng", 
+    "Malang", 
+    "Yogyakarta", 
+    "Solo Balapan", 
+    "Semarang Tawang"
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +60,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   }
 
   void _showStationPicker(bool isAsal) {
-    final stations = ["Gambir", "Bandung", "Surabaya Gubeng", "Malang", "Yogyakarta", "Solo Balapan", "Semarang Tawang"];
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -59,42 +68,46 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Pilih Stasiun ${isAsal ? 'Asal' : 'Tujuan'}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              "Pilih Stasiun ${isAsal ? 'Asal' : 'Tujuan'}", 
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+            ),
             SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
                 itemCount: stations.length,
-                itemBuilder: (ctx, i) => ListTile(
-                  leading: Icon(Icons.train, color: kPrimaryColor),
-                  title: Text(stations[i]),
-                  onTap: () {
-                    // --- LOGIC : CEGAH STASIUN SAMA (AUTO SWAP) ---
-                    setState(() {
-                      String selected = stations[i];
-                      
-                      if (isAsal) {
-                        // Jika kita mengubah ASAL
-                        if (selected == _stasiunTujuan) {
-                          // Jika Asal baru == Tujuan sekarang, maka TUKAR posisi
-                          _stasiunTujuan = _stasiunAsal; // Tujuan mengambil Asal yg lama
-                          _stasiunAsal = selected;       // Asal mengambil yang baru
+                itemBuilder: (ctx, i) {
+                  String currentStation = stations[i];
+                  
+                  // PERBAIKAN: Disable stasiun yang sedang dipilih di sisi lain
+                  bool isDisabled = isAsal 
+                    ? currentStation == _stasiunTujuan 
+                    : currentStation == _stasiunAsal;
+                  
+                  return ListTile(
+                    leading: Icon(
+                      Icons.train, 
+                      color: isDisabled ? Colors.grey : kPrimaryColor
+                    ),
+                    title: Text(
+                      currentStation,
+                      style: TextStyle(
+                        color: isDisabled ? Colors.grey : Colors.black
+                      ),
+                    ),
+                    enabled: !isDisabled,
+                    onTap: isDisabled ? null : () {
+                      setState(() {
+                        if (isAsal) {
+                          _stasiunAsal = currentStation;
                         } else {
-                          _stasiunAsal = selected;
+                          _stasiunTujuan = currentStation;
                         }
-                      } else {
-                        // Jika kita mengubah TUJUAN
-                        if (selected == _stasiunAsal) {
-                          // Jika Tujuan baru == Asal sekarang, maka TUKAR posisi
-                          _stasiunAsal = _stasiunTujuan; // Asal mengambil Tujuan yg lama
-                          _stasiunTujuan = selected;     // Tujuan mengambil yang baru
-                        } else {
-                          _stasiunTujuan = selected;
-                        }
-                      }
-                    });
-                    Navigator.pop(ctx);
-                  },
-                ),
+                      });
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -146,7 +159,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                   setModalState(() => _passengerCount++);
                                   setState(() {});
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Maksimal 4 penumpang per transaksi")));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Maksimal 4 penumpang per transaksi"))
+                                  );
                                 }
                               },
                             ),
@@ -234,8 +249,19 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("KAI ACCESS", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                            Text("For Your Easy Access", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            Text(
+                              "KAI ACCESS", 
+                              style: TextStyle(
+                                color: Colors.white, 
+                                fontSize: 22, 
+                                fontWeight: FontWeight.bold, 
+                                letterSpacing: 1
+                              )
+                            ),
+                            Text(
+                              "For Your Easy Access", 
+                              style: TextStyle(color: Colors.white70, fontSize: 12)
+                            ),
                           ],
                         ),
                         Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 28),
@@ -256,15 +282,28 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 15),
-                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kSecondaryColor, width: 3))),
-                          child: Center(child: Text("Intercity Trains", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold))),
-                        )),
-                        Expanded(child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 15),
-                          child: Center(child: Text("Local Trains", style: TextStyle(color: Colors.grey))),
-                        )),
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: kSecondaryColor, width: 3))
+                            ),
+                            child: Center(
+                              child: Text(
+                                "Intercity Trains", 
+                                style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)
+                              )
+                            ),
+                          )
+                        ),
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 15),
+                            child: Center(
+                              child: Text("Local Trains", style: TextStyle(color: Colors.grey))
+                            ),
+                          )
+                        ),
                       ],
                     ),
                     
@@ -282,8 +321,19 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                     children: [
                                       Text("Origin", style: TextStyle(color: Colors.grey, fontSize: 12)),
                                       SizedBox(height: 5),
-                                      Text(_stasiunAsal, style: TextStyle(color: kPrimaryColor, fontSize: 16, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                                      Text("Stasiun $_stasiunAsal", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                                      Text(
+                                        _stasiunAsal, 
+                                        style: TextStyle(
+                                          color: kPrimaryColor, 
+                                          fontSize: 16, 
+                                          fontWeight: FontWeight.bold
+                                        ), 
+                                        overflow: TextOverflow.ellipsis
+                                      ),
+                                      Text(
+                                        "Stasiun $_stasiunAsal", 
+                                        style: TextStyle(color: Colors.grey, fontSize: 10)
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -292,7 +342,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                 onTap: _swapStations,
                                 child: Container(
                                   padding: EdgeInsets.all(8),
-                                  decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blue[50]),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle, 
+                                    color: Colors.blue[50]
+                                  ),
                                   child: Icon(Icons.swap_horiz, color: kPrimaryColor),
                                 ),
                               ),
@@ -304,8 +357,19 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                     children: [
                                       Text("Destination", style: TextStyle(color: Colors.grey, fontSize: 12)),
                                       SizedBox(height: 5),
-                                      Text(_stasiunTujuan, style: TextStyle(color: kPrimaryColor, fontSize: 16, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                                      Text("Stasiun $_stasiunTujuan", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                                      Text(
+                                        _stasiunTujuan, 
+                                        style: TextStyle(
+                                          color: kPrimaryColor, 
+                                          fontSize: 16, 
+                                          fontWeight: FontWeight.bold
+                                        ), 
+                                        overflow: TextOverflow.ellipsis
+                                      ),
+                                      Text(
+                                        "Stasiun $_stasiunTujuan", 
+                                        style: TextStyle(color: Colors.grey, fontSize: 10)
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -332,7 +396,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                         children: [
                                           Icon(Icons.calendar_today, size: 16, color: kSecondaryColor),
                                           SizedBox(width: 8),
-                                          Text(DateFormat('EEE, d MMM yyyy').format(_tanggalBerangkat), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          Text(
+                                            DateFormat('EEE, d MMM yyyy').format(_tanggalBerangkat), 
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
+                                          ),
                                         ],
                                       )
                                     ],
@@ -376,27 +443,34 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                 elevation: 5,
                               ),
                               onPressed: () {
-                                // 1. Validasi Stasiun Kosong
-                                if (_stasiunAsal.contains("Pilih") || _stasiunTujuan.contains("Pilih")) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Pilih stasiun dulu!")));
-                                  return;
-                                }
-                                // 2. Validasi Stasiun Sama (Extra Safety)
+                                // Validasi stasiun sama
                                 if (_stasiunAsal == _stasiunTujuan) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Asal dan Tujuan tidak boleh sama!")));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Asal dan Tujuan tidak boleh sama!"))
+                                  );
                                   return;
                                 }
 
-                                Navigator.push(context, MaterialPageRoute(
-                                  builder: (_) => SearchScheduleScreen(
-                                    asal: _stasiunAsal,
-                                    tujuan: _stasiunTujuan,
-                                    tanggal: DateFormat('yyyy-MM-dd').format(_tanggalBerangkat),
-                                    passengerCount: _passengerCount, 
+                                Navigator.push(
+                                  context, 
+                                  MaterialPageRoute(
+                                    builder: (_) => SearchScheduleScreen(
+                                      asal: _stasiunAsal,
+                                      tujuan: _stasiunTujuan,
+                                      tanggal: DateFormat('yyyy-MM-dd').format(_tanggalBerangkat),
+                                      passengerCount: _passengerCount, 
+                                    )
                                   )
-                                ));
+                                );
                               },
-                              child: Text("SEARCH", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              child: Text(
+                                "SEARCH", 
+                                style: TextStyle(
+                                  color: Colors.white, 
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 16
+                                )
+                              ),
                             ),
                           )
                         ],
@@ -439,11 +513,19 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
       children: [
         Container(
           padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey[200]!)),
+          decoration: BoxDecoration(
+            color: Colors.white, 
+            borderRadius: BorderRadius.circular(15), 
+            border: Border.all(color: Colors.grey[200]!)
+          ),
           child: Icon(icon, color: kPrimaryColor, size: 28),
         ),
         SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[700]), textAlign: TextAlign.center),
+        Text(
+          label, 
+          style: TextStyle(fontSize: 10, color: Colors.grey[700]), 
+          textAlign: TextAlign.center
+        ),
       ],
     );
   }
