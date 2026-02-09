@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../constants.dart';
@@ -20,16 +21,145 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _alamatController = TextEditingController();
   final _telpController = TextEditingController();
 
+  bool _obscurePassword = true;
+
+  // VALIDASI USERNAME
+  String? _validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Username wajib diisi';
+    }
+    if (value.length < 4) {
+      return 'Username minimal 4 karakter';
+    }
+    if (value.length > 20) {
+      return 'Username maksimal 20 karakter';
+    }
+    // Hanya boleh huruf, angka, underscore, dan titik
+    if (!RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(value)) {
+      return 'Username hanya boleh huruf, angka, underscore, dan titik';
+    }
+    return null;
+  }
+
+  // VALIDASI PASSWORD (KUAT)
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password wajib diisi';
+    }
+    if (value.length < 8) {
+      return 'Password minimal 8 karakter';
+    }
+    if (value.length > 50) {
+      return 'Password maksimal 50 karakter';
+    }
+    // Harus ada huruf besar
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Password harus mengandung huruf besar';
+    }
+    // Harus ada huruf kecil
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return 'Password harus mengandung huruf kecil';
+    }
+    // Harus ada angka
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
+      return 'Password harus mengandung angka';
+    }
+    // Harus ada karakter spesial
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+      return 'Password harus mengandung karakter spesial (!@#%^&*...)';
+    }
+    return null;
+  }
+
+  // VALIDASI NIK (16 DIGIT)
+  String? _validateNIK(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'NIK wajib diisi';
+    }
+    // Hapus semua karakter non-digit
+    String digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    
+    if (digitsOnly.length != 16) {
+      return 'NIK harus tepat 16 digit';
+    }
+    // Validasi apakah semua karakter adalah angka
+    if (!RegExp(r'^[0-9]{16}$').hasMatch(digitsOnly)) {
+      return 'NIK hanya boleh berisi angka';
+    }
+    return null;
+  }
+
+  // VALIDASI NAMA LENGKAP
+  String? _validateNama(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Nama lengkap wajib diisi';
+    }
+    if (value.length < 3) {
+      return 'Nama minimal 3 karakter';
+    }
+    if (value.length > 100) {
+      return 'Nama maksimal 100 karakter';
+    }
+    // Hanya boleh huruf dan spasi
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Nama hanya boleh berisi huruf dan spasi';
+    }
+    return null;
+  }
+
+  // VALIDASI NOMOR TELEPON
+  String? _validateTelp(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Nomor telepon wajib diisi';
+    }
+    // Hapus semua karakter non-digit
+    String digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    
+    if (digitsOnly.length < 10) {
+      return 'Nomor telepon minimal 10 digit';
+    }
+    if (digitsOnly.length > 15) {
+      return 'Nomor telepon maksimal 15 digit';
+    }
+    // Harus dimulai dengan 0 atau +62
+    if (!value.startsWith('0') && !value.startsWith('+62') && !value.startsWith('62')) {
+      return 'Nomor telepon harus dimulai dengan 0, 62, atau +62';
+    }
+    return null;
+  }
+
+  // VALIDASI ALAMAT
+  String? _validateAlamat(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Alamat wajib diisi';
+    }
+    if (value.length < 10) {
+      return 'Alamat minimal 10 karakter';
+    }
+    if (value.length > 200) {
+      return 'Alamat maksimal 200 karakter';
+    }
+    return null;
+  }
+
   void _submitRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mohon perbaiki data yang tidak valid'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     final response = await Provider.of<AuthProvider>(context, listen: false).register(
-      username: _usernameController.text,
+      username: _usernameController.text.trim(),
       password: _passwordController.text,
-      nik: _nikController.text,
-      namaPenumpang: _namaController.text,
-      alamat: _alamatController.text,
-      telp: _telpController.text,
+      nik: _nikController.text.replaceAll(RegExp(r'\D'), ''), // Kirim hanya angka
+      namaPenumpang: _namaController.text.trim(),
+      alamat: _alamatController.text.trim(),
+      telp: _telpController.text.trim(),
     );
 
     if (response['status'] == 'success') {
@@ -71,7 +201,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // PERBAIKAN: Tombol Back sekarang Putih
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
@@ -82,7 +211,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 5),
-                          // PERBAIKAN: Judul sekarang Putih
                           const Text(
                             "Daftar Akun Baru",
                             style: TextStyle(
@@ -130,57 +258,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildSectionTitle("Informasi Akun"),
+                          
+                          // USERNAME
                           _buildTextField(
                             controller: _usernameController,
                             label: "Username",
-                            hint: "Buat username unik",
+                            hint: "Minimal 4 karakter, tanpa spasi",
                             icon: Icons.account_circle_outlined,
+                            validator: _validateUsername,
                           ),
                           const SizedBox(height: 15),
-                          _buildTextField(
-                            controller: _passwordController,
-                            label: "Password",
-                            hint: "Gunakan minimal 6 karakter",
-                            icon: Icons.lock_outline,
-                            isPassword: true,
-                          ),
+                          
+                          // PASSWORD dengan toggle visibility
+                          _buildPasswordField(),
                           
                           const SizedBox(height: 30),
                           _buildSectionTitle("Informasi Pribadi"),
+                          
+                          // NIK
                           _buildTextField(
                             controller: _nikController,
                             label: "NIK (KTP)",
                             hint: "16 digit nomor induk",
                             icon: Icons.assignment_ind_outlined,
                             inputType: TextInputType.number,
+                            validator: _validateNIK,
+                            maxLength: 16,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
                           ),
                           const SizedBox(height: 15),
+                          
+                          // NAMA LENGKAP
                           _buildTextField(
                             controller: _namaController,
                             label: "Nama Lengkap",
                             hint: "Sesuai kartu identitas",
                             icon: Icons.person_outline,
+                            validator: _validateNama,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+                            ],
                           ),
                           const SizedBox(height: 15),
+                          
+                          // NOMOR TELEPON
                           _buildTextField(
                             controller: _telpController,
                             label: "Nomor Telepon",
-                            hint: "Contoh: 0812345xxx",
+                            hint: "Contoh: 081234567890",
                             icon: Icons.phone_android_outlined,
                             inputType: TextInputType.phone,
+                            validator: _validateTelp,
+                            maxLength: 15,
                           ),
                           const SizedBox(height: 15),
+                          
+                          // ALAMAT
                           _buildTextField(
                             controller: _alamatController,
                             label: "Alamat",
-                            hint: "Alamat lengkap saat ini",
+                            hint: "Alamat lengkap saat ini (min. 10 karakter)",
                             icon: Icons.home_outlined,
-                            maxLines: 2,
+                            maxLines: 3,
+                            validator: _validateAlamat,
                           ),
 
                           const SizedBox(height: 40),
 
-                          // Tombol Orange khas KAI
+                          // Tombol Register
                           SizedBox(
                             width: double.infinity,
                             height: 52,
@@ -199,11 +346,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ? const SizedBox(
                                         height: 20,
                                         width: 20,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
                                       )
                                     : const Text(
                                         "DAFTAR SEKARANG",
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                               ),
                             ),
@@ -218,12 +371,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Sudah punya akun? ", style: TextStyle(color: Colors.grey.shade700)),
+                    Text(
+                      "Sudah punya akun? ",
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const Text(
                         "Masuk",
-                        style: TextStyle(color: kSecondaryColor, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: kSecondaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -251,34 +410,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-    TextInputType inputType = TextInputType.text,
-    int maxLines = 1,
-  }) {
+  Widget _buildPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+          "Password",
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 6),
         TextFormField(
-          controller: controller,
-          obscureText: isPassword,
-          keyboardType: inputType,
-          maxLines: maxLines,
-          validator: (value) => (value == null || value.isEmpty) ? '$label wajib diisi' : null,
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          validator: _validatePassword,
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: "Min 8 karakter, huruf besar/kecil, angka, simbol",
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-            prefixIcon: Icon(icon, color: kPrimaryColor, size: 20),
+            prefixIcon: const Icon(Icons.lock_outline, color: kPrimaryColor, size: 20),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+                size: 20,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
             filled: true,
             fillColor: Colors.grey.shade50,
             contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
@@ -290,9 +455,104 @@ class _RegisterScreenState extends State<RegisterScreen> {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
             ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Password requirements hint
+        Text(
+          "• Minimal 8 karakter\n"
+          "• Mengandung huruf besar & kecil\n"
+          "• Mengandung angka\n"
+          "• Mengandung karakter spesial (!@#\$%^&*...)",
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey.shade600,
+            height: 1.3,
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType inputType = TextInputType.text,
+    int maxLines = 1,
+    int? maxLength,
+    String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          obscureText: isPassword,
+          keyboardType: inputType,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
+          validator: validator ?? (value) => (value == null || value.isEmpty) ? '$label wajib diisi' : null,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            prefixIcon: Icon(icon, color: kPrimaryColor, size: 20),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
+            counterText: '', // Hide character counter
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _nikController.dispose();
+    _namaController.dispose();
+    _alamatController.dispose();
+    _telpController.dispose();
+    super.dispose();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
@@ -42,6 +43,42 @@ class _BookingScreenState extends State<BookingScreen> {
     });
   }
 
+  // VALIDASI NIK
+  String? _validateNIK(String? value, bool isMainUser) {
+    if (isMainUser) return null; // User utama sudah tervalidasi saat register
+    
+    if (value == null || value.isEmpty) {
+      return 'NIK wajib diisi';
+    }
+    // Hapus semua karakter non-digit
+    String digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    
+    if (digitsOnly.length != 16) {
+      return 'NIK harus tepat 16 digit';
+    }
+    return null;
+  }
+
+  // VALIDASI NAMA
+  String? _validateNama(String? value, bool isMainUser) {
+    if (isMainUser) return null; // User utama sudah tervalidasi saat register
+    
+    if (value == null || value.isEmpty) {
+      return 'Nama wajib diisi';
+    }
+    if (value.length < 3) {
+      return 'Nama minimal 3 karakter';
+    }
+    if (value.length > 100) {
+      return 'Nama maksimal 100 karakter';
+    }
+    // Hanya boleh huruf dan spasi
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Nama hanya boleh berisi huruf dan spasi';
+    }
+    return null;
+  }
+
   // 1. GENERATE FORM SESUAI JUMLAH PENUMPANG
   void _initPassengers() {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
@@ -53,6 +90,8 @@ class _BookingScreenState extends State<BookingScreen> {
         'nama': TextEditingController(text: isMainUser ? (user?.namaLengkap ?? '') : ''),
         'kursi': null, 
         'is_user': isMainUser,
+        'nik_error': null,
+        'nama_error': null,
       });
     }
   }
@@ -106,7 +145,9 @@ class _BookingScreenState extends State<BookingScreen> {
   // 4. BUKA MODAL SEAT MAP
   void _openSeatMap() {
     if (_selectedGerbong == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Mohon tunggu, memuat gerbong...")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Mohon tunggu, memuat gerbong..."))
+      );
       return;
     }
 
@@ -117,11 +158,11 @@ class _BookingScreenState extends State<BookingScreen> {
       builder: (ctx) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.9, 
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20))
           ),
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: StatefulBuilder(
             builder: (context, setModalState) {
               return Column(
@@ -130,35 +171,50 @@ class _BookingScreenState extends State<BookingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Pilih Kursi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      IconButton(icon: Icon(Icons.close), onPressed: () => Navigator.pop(context))
+                      const Text(
+                        "Pilih Kursi",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      )
                     ],
                   ),
-                  Divider(),
+                  const Divider(),
                   
                   // Pilihan Gerbong di dalam Modal
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedGerbong,
                         isExpanded: true,
-                        items: _listGerbong.map((g) => DropdownMenuItem(value: g['id'].toString(), child: Text(g['nama_gerbong']))).toList(),
+                        items: _listGerbong.map((g) => DropdownMenuItem(
+                          value: g['id'].toString(),
+                          child: Text(g['nama_gerbong']),
+                        )).toList(),
                         onChanged: (val) {
                           Navigator.pop(context); // Tutup dulu
                           _onGerbongChanged(val); // Ganti gerbong
-                          Future.delayed(Duration(milliseconds: 500), () => _openSeatMap()); // Buka lagi
+                          Future.delayed(
+                            const Duration(milliseconds: 500),
+                            () => _openSeatMap(),
+                          ); // Buka lagi
                         },
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
                   // Denah Kursi
                   Expanded(
                     child: _isLoadingKursi 
-                    ? Center(child: CircularProgressIndicator())
+                    ? const Center(child: CircularProgressIndicator())
                     : SeatMapWidget(
                         allSeats: _allSeatsInGerbong,
                         occupiedSeats: _occupiedSeatIds,
@@ -173,15 +229,20 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
 
                   // Footer Modal
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   SizedBox(
-                    width: double.infinity, height: 50,
+                    width: double.infinity,
+                    height: 50,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: kSecondaryColor),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kSecondaryColor,
+                      ),
                       onPressed: () {
                         if (_mySelectedSeatIds.length != widget.passengerCount) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text("Pilih ${widget.passengerCount} kursi untuk melanjutkan!")
+                            content: Text(
+                              "Pilih ${widget.passengerCount} kursi untuk melanjutkan!"
+                            ),
                           ));
                           return;
                         }
@@ -194,7 +255,10 @@ class _BookingScreenState extends State<BookingScreen> {
                         });
                         Navigator.pop(context); 
                       },
-                      child: Text("SIMPAN (${_mySelectedSeatIds.length}/${widget.passengerCount})", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        "SIMPAN (${_mySelectedSeatIds.length}/${widget.passengerCount})",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   )
                 ],
@@ -206,15 +270,53 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  // 5. SUBMIT ORDER
+  // 5. SUBMIT ORDER DENGAN VALIDASI
   void _submitOrder() async {
-    // Validasi
-    bool isIncomplete = _passengers.any((p) => 
-      p['nik'].text.isEmpty || p['nama'].text.isEmpty || p['kursi'] == null
-    );
+    // Reset error messages
+    setState(() {
+      for (var p in _passengers) {
+        p['nik_error'] = null;
+        p['nama_error'] = null;
+      }
+    });
 
-    if (isIncomplete) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Mohon lengkapi Data Penumpang & Pilih Kursi!")));
+    // Validasi semua penumpang
+    bool hasError = false;
+    for (int i = 0; i < _passengers.length; i++) {
+      var p = _passengers[i];
+      bool isMainUser = p['is_user'] == true;
+      
+      // Validasi NIK
+      String? nikError = _validateNIK(p['nik'].text, isMainUser);
+      if (nikError != null) {
+        setState(() {
+          p['nik_error'] = nikError;
+        });
+        hasError = true;
+      }
+      
+      // Validasi Nama
+      String? namaError = _validateNama(p['nama'].text, isMainUser);
+      if (namaError != null) {
+        setState(() {
+          p['nama_error'] = namaError;
+        });
+        hasError = true;
+      }
+      
+      // Validasi Kursi
+      if (p['kursi'] == null) {
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Mohon lengkapi dan perbaiki Data Penumpang & Pilih Kursi!"),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -224,8 +326,8 @@ class _BookingScreenState extends State<BookingScreen> {
     // Payload
     List<Map<String, dynamic>> payload = _passengers.map((p) {
       return {
-        'nik': p['nik'].text,
-        'nama': p['nama'].text,
+        'nik': p['nik'].text.replaceAll(RegExp(r'\D'), ''), // Kirim hanya angka
+        'nama': p['nama'].text.trim(),
         'id_kursi': p['kursi'],
       };
     }).toList();
@@ -243,10 +345,15 @@ class _BookingScreenState extends State<BookingScreen> {
       int totalHarga = hargaSatuan * widget.passengerCount;
 
       Navigator.push(context, MaterialPageRoute(
-        builder: (_) => PaymentScreen(idPembelian: idPembelian, totalHarga: totalHarga)
+        builder: (_) => PaymentScreen(
+          idPembelian: idPembelian,
+          totalHarga: totalHarga,
+        ),
       ));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: ${result['message']}")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal: ${result['message']}")),
+      );
     }
   }
 
@@ -255,7 +362,10 @@ class _BookingScreenState extends State<BookingScreen> {
     if (id == null) return "Belum dipilih";
     try {
       // Cari kursi di gerbong saat ini
-      var seat = _allSeatsInGerbong.firstWhere((e) => e['id'].toString() == id, orElse: () => null);
+      var seat = _allSeatsInGerbong.firstWhere(
+        (e) => e['id'].toString() == id,
+        orElse: () => null,
+      );
       if (seat != null) return "${seat['no_kursi']}";
       return "Terpilih"; // Fallback jika ganti gerbong visualnya hilang tapi datanya ada
     } catch (e) {
@@ -272,17 +382,21 @@ class _BookingScreenState extends State<BookingScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text("Pesan Tiket", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)), 
+        title: const Text(
+          "Pesan Tiket",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ), 
         backgroundColor: kPrimaryColor,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
           // 1. STEPPER & HEADER (Background Biru)
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+            decoration: const BoxDecoration(
               color: kPrimaryColor,
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(20))
             ),
@@ -301,33 +415,36 @@ class _BookingScreenState extends State<BookingScreen> {
           // 2. CONTENT SCROLLABLE
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // CARD DETAIL KERETA
                   _buildTrainDetailCard(),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   // HEADER DATA PENUMPANG
-                  Text("Data Penumpang", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 10),
+                  const Text(
+                    "Data Penumpang",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
 
                   // LIST FORM PENUMPANG
                   ListView.separated(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: _passengers.length,
-                    separatorBuilder: (ctx, i) => SizedBox(height: 15),
+                    separatorBuilder: (ctx, i) => const SizedBox(height: 15),
                     itemBuilder: (ctx, i) => _buildPassengerForm(i),
                   ),
 
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   // CARD PILIH KURSI
                   _buildSeatSelectionCard(),
                   
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -346,21 +463,40 @@ class _BookingScreenState extends State<BookingScreen> {
     return Column(
       children: [
         Container(
-          width: 24, height: 24,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
             color: isActive ? kSecondaryColor : Colors.white24,
             shape: BoxShape.circle
           ),
-          child: Center(child: Text(num, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
+          child: Center(
+            child: Text(
+              num,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ),
-        SizedBox(height: 4),
-        Text(label, style: TextStyle(color: Colors.white70, fontSize: 10))
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        )
       ],
     );
   }
 
   Widget _buildLine(bool isActive) {
-    return Expanded(child: Container(height: 2, color: isActive ? kSecondaryColor : Colors.white24, margin: EdgeInsets.symmetric(horizontal: 5)));
+    return Expanded(
+      child: Container(
+        height: 2,
+        color: isActive ? kSecondaryColor : Colors.white24,
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+      ),
+    );
   }
 
   Widget _buildTrainDetailCard() {
@@ -370,33 +506,62 @@ class _BookingScreenState extends State<BookingScreen> {
     String timeStr = DateFormat('HH:mm').format(dt);
 
     return Container(
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)]),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 5)
+        ],
+      ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(widget.jadwal['nama_kereta'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text(dateStr, style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(
+                widget.jadwal['nama_kereta'],
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Text(
+                dateStr,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
             ],
           ),
-          Divider(height: 20),
+          const Divider(height: 20),
           Row(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.jadwal['asal_keberangkatan'], style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(timeStr, style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                  Text(
+                    widget.jadwal['asal_keberangkatan'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    timeStr,
+                    style: const TextStyle(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
-              Expanded(child: Icon(Icons.arrow_right_alt, color: Colors.grey)),
+              const Expanded(
+                child: Icon(Icons.arrow_right_alt, color: Colors.grey),
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(widget.jadwal['tujuan_keberangkatan'], style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text("Tiba", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                  Text(
+                    widget.jadwal['tujuan_keberangkatan'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Text(
+                    "Tiba",
+                    style: TextStyle(color: Colors.grey, fontSize: 10),
+                  ),
                 ],
               ),
             ],
@@ -409,60 +574,104 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget _buildPassengerForm(int index) {
     var p = _passengers[index];
     bool isSeatSelected = p['kursi'] != null;
+    bool isMainUser = p['is_user'] == true;
 
     return Container(
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey[200]!)),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Penumpang ${index + 1}", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold)),
-              if (index == 0) Text("Dewasa", style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(
+                "Penumpang ${index + 1}",
+                style: const TextStyle(
+                  color: kPrimaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (index == 0) const Text(
+                "Dewasa",
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
             ],
           ),
-          Divider(),
-          // Input Nama
+          const Divider(),
+          
+          // Input Nama dengan validasi
           TextField(
             controller: p['nama'],
-            readOnly: p['is_user'], 
-            style: TextStyle(fontWeight: FontWeight.bold),
+            readOnly: isMainUser,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            inputFormatters: isMainUser ? null : [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
+            ],
             decoration: InputDecoration(
               labelText: "Nama Lengkap",
-              labelStyle: TextStyle(fontSize: 12),
+              labelStyle: const TextStyle(fontSize: 12),
+              errorText: p['nama_error'],
+              hintText: isMainUser ? null : "Hanya huruf dan spasi",
+              hintStyle: const TextStyle(fontSize: 11, color: Colors.grey),
               isDense: true,
               border: InputBorder.none,
-              contentPadding: EdgeInsets.zero
+              contentPadding: EdgeInsets.zero,
             ),
           ),
-          SizedBox(height: 10),
-          // Input NIK
+          const SizedBox(height: 10),
+          
+          // Input NIK dengan validasi
           TextField(
             controller: p['nik'],
-            readOnly: p['is_user'],
+            readOnly: isMainUser,
             keyboardType: TextInputType.number,
+            maxLength: 16,
+            inputFormatters: isMainUser ? null : [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
             decoration: InputDecoration(
               labelText: "Nomor Identitas (NIK)",
-              labelStyle: TextStyle(fontSize: 12),
+              labelStyle: const TextStyle(fontSize: 12),
+              errorText: p['nik_error'],
+              hintText: isMainUser ? null : "16 digit",
+              hintStyle: const TextStyle(fontSize: 11, color: Colors.grey),
               isDense: true,
               border: InputBorder.none,
-              contentPadding: EdgeInsets.zero
+              contentPadding: EdgeInsets.zero,
+              counterText: '', // Hide character counter
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
+          
           // Info Kursi per Penumpang
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(color: isSeatSelected ? Colors.blue[50] : Colors.grey[100], borderRadius: BorderRadius.circular(5)),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: isSeatSelected ? Colors.blue[50] : Colors.grey[100],
+              borderRadius: BorderRadius.circular(5),
+            ),
             child: Row(
               children: [
-                Icon(Icons.event_seat, size: 16, color: isSeatSelected ? kPrimaryColor : Colors.grey),
-                SizedBox(width: 5),
+                Icon(
+                  Icons.event_seat,
+                  size: 16,
+                  color: isSeatSelected ? kPrimaryColor : Colors.grey,
+                ),
+                const SizedBox(width: 5),
                 Text(
-                  isSeatSelected ? "Kursi: ${_getSeatDisplay(p['kursi'])}" : "Kursi belum dipilih",
-                  style: TextStyle(fontSize: 12, color: isSeatSelected ? kPrimaryColor : Colors.grey, fontWeight: FontWeight.bold)
+                  isSeatSelected
+                      ? "Kursi: ${_getSeatDisplay(p['kursi'])}"
+                      : "Kursi belum dipilih",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSeatSelected ? kPrimaryColor : Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
                 )
               ],
             ),
@@ -478,33 +687,46 @@ class _BookingScreenState extends State<BookingScreen> {
     return InkWell(
       onTap: _openSeatMap,
       child: Container(
-        padding: EdgeInsets.all(15),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           color: Colors.white, 
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: allSeatsSelected ? kPrimaryColor : Colors.orange),
+          border: Border.all(
+            color: allSeatsSelected ? kPrimaryColor : Colors.orange,
+          ),
         ),
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(color: Colors.blue[50], shape: BoxShape.circle),
-              child: Icon(Icons.grid_on, color: kPrimaryColor),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.grid_on, color: kPrimaryColor),
             ),
-            SizedBox(width: 15),
+            const SizedBox(width: 15),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Pilih Kursi", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    "Pilih Kursi",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   Text(
-                    allSeatsSelected ? "Semua kursi terpilih" : "Ketuk untuk memilih kursi", 
-                    style: TextStyle(color: allSeatsSelected ? kPrimaryColor : Colors.grey, fontSize: 12)
+                    allSeatsSelected
+                        ? "Semua kursi terpilih"
+                        : "Ketuk untuk memilih kursi", 
+                    style: TextStyle(
+                      color: allSeatsSelected ? kPrimaryColor : Colors.grey,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               )
             ),
-            Icon(Icons.chevron_right, color: Colors.grey)
+            const Icon(Icons.chevron_right, color: Colors.grey)
           ],
         ),
       ),
@@ -513,10 +735,16 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Widget _buildBottomBar(int totalHarga) {
     return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))]
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, -5),
+          )
+        ]
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -524,21 +752,47 @@ class _BookingScreenState extends State<BookingScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Total Harga", style: TextStyle(color: Colors.grey, fontSize: 12)),
-              Text("Rp $totalHarga", style: TextStyle(color: kSecondaryColor, fontWeight: FontWeight.bold, fontSize: 18)),
+              const Text(
+                "Total Harga",
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              Text(
+                "Rp $totalHarga",
+                style: const TextStyle(
+                  color: kSecondaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
             ],
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: kSecondaryColor,
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
-            onPressed: Provider.of<BookingProvider>(context).isLoading ? null : _submitOrder,
-            child: Text("LANJUTKAN", style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: Provider.of<BookingProvider>(context).isLoading
+                ? null
+                : _submitOrder,
+            child: const Text(
+              "LANJUTKAN",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           )
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    for (var p in _passengers) {
+      p['nik'].dispose();
+      p['nama'].dispose();
+    }
+    super.dispose();
   }
 }
